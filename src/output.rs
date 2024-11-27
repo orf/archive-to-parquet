@@ -1,10 +1,10 @@
-use std::fmt::{Display, Formatter};
 use arrow::array::RecordBatch;
 use arrow::datatypes::{DataType, Field, Schema};
 use parquet::arrow::arrow_writer::ArrowWriter;
 use parquet::basic::{Compression, ZstdLevel};
 use parquet::errors::ParquetError;
 use parquet::file::properties::WriterProperties;
+use std::fmt::{Display, Formatter};
 use std::fs::File;
 use std::io::BufWriter;
 use std::path::PathBuf;
@@ -55,10 +55,10 @@ impl OutputFile {
 
     #[tracing::instrument(skip_all, fields(self=%self))]
     pub fn write_items(&mut self, batch: RecordBatch) -> Result<(), ParquetError> {
-        info!(rows=batch.num_rows(), "writing");
+        info!(rows = batch.num_rows(), "writing");
         let mut writer = self.writer.lock().expect("lock poisoned");
         writer.write(&batch)?;
-        info!(rows=batch.num_rows(), "written");
+        info!(rows = batch.num_rows(), "written");
         Ok(())
     }
 }

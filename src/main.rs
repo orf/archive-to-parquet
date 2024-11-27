@@ -8,9 +8,9 @@ use clap::Parser;
 use std::io::BufReader;
 use std::path::PathBuf;
 use tracing::{info, warn};
-use tracing_subscriber::{fmt, EnvFilter};
 use tracing_subscriber::layer::SubscriberExt;
 use tracing_subscriber::util::SubscriberInitExt;
+use tracing_subscriber::{fmt, EnvFilter};
 
 #[derive(Debug, Clone, Parser)]
 struct Args {

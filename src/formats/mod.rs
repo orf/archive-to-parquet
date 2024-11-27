@@ -35,7 +35,7 @@ impl Format {
         source: impl AsRef<str> + Display,
         reader: impl Read,
         items: &mut Items,
-        recursive: bool
+        recursive: bool,
     ) -> Result<(), ItemsError> {
         match self {
             Format::Tar => tar::extract(source, reader, items, recursive),
