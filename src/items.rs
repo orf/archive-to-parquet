@@ -1,32 +1,80 @@
+use crate::output::OutputFile;
 use arrow::array::{
-    Array, BinaryViewBuilder, FixedSizeBinaryBuilder, PrimitiveBuilder, RecordBatch,
+    ArrayBuilder, BinaryViewBuilder, FixedSizeBinaryBuilder, PrimitiveBuilder, RecordBatch,
     StringViewBuilder,
 };
-use arrow::datatypes::{SchemaRef, UInt64Type};
+use arrow::datatypes::UInt64Type;
 use arrow::error::ArrowError;
+use parquet::errors::ParquetError;
 use sha2::digest::FixedOutputReset;
 use sha2::{Digest, Sha256};
+use std::fmt::{Display, Formatter};
 use std::sync::Arc;
 
+#[derive(Debug, thiserror::Error)]
+pub enum ItemsError {
+    #[error(transparent)]
+    Batch(#[from] ArrowError),
+    #[error(transparent)]
+    Write(#[from] ParquetError),
+    #[error(transparent)]
+    IO(#[from] std::io::Error),
+}
+
 pub struct Items {
-    pub source: String,
-    pub paths: StringViewBuilder,
-    pub sizes: PrimitiveBuilder<UInt64Type>,
-    pub data: BinaryViewBuilder,
+    output_file: OutputFile,
+    capacity: usize,
+    pub total_written: usize,
+    sources: StringViewBuilder,
+    paths: StringViewBuilder,
+    sizes: PrimitiveBuilder<UInt64Type>,
+    data: BinaryViewBuilder,
     hashes: FixedSizeBinaryBuilder,
 }
 
 impl Items {
-    pub fn new_with_capacity(source: String, capacity: usize) -> Self {
+    pub fn new_with_capacity(output_file: OutputFile, capacity: usize) -> Self {
         Self {
-            source,
+            output_file,
+            capacity,
+            total_written: 0,
+            sources: StringViewBuilder::with_capacity(capacity).with_deduplicate_strings(),
             paths: StringViewBuilder::with_capacity(capacity),
             sizes: PrimitiveBuilder::with_capacity(capacity),
             data: BinaryViewBuilder::with_capacity(capacity),
             hashes: FixedSizeBinaryBuilder::with_capacity(capacity, 32),
         }
     }
-    pub fn into_record_batch(mut self, schema: SchemaRef) -> Result<RecordBatch, ArrowError> {
+
+    pub fn add_record(
+        &mut self,
+        source: impl AsRef<str>,
+        paths: impl AsRef<str>,
+        size: u64,
+        data: &[u8],
+    ) -> Result<(), ItemsError> {
+        self.sources.append_value(source.as_ref());
+        self.paths.append_value(paths.as_ref());
+        self.sizes.append_value(size);
+        self.data.append_value(data);
+        if self.sources.len() >= self.capacity {
+            self.flush()?;
+        }
+        Ok(())
+    }
+
+    pub fn flush(&mut self) -> Result<(), ItemsError> {
+        if self.sources.len() == 0 {
+            return Ok(());
+        }
+        let batch = self.create_record_batch_and_reset()?;
+        self.total_written += batch.num_rows();
+        self.output_file.write_items(batch)?;
+        Ok(())
+    }
+
+    fn create_record_batch_and_reset(&mut self) -> Result<RecordBatch, ArrowError> {
+        let schema = self.output_file.schema.clone();
         let data = self.data.finish();
 
         let mut hasher = Sha256::new();
@@ -40,18 +88,26 @@ impl Items {
                 .expect("Error appending hash");
         }
 
-        // Maybe a better way to do this
-        let mut sources = StringViewBuilder::new();
-        sources.extend(std::iter::repeat(Some(self.source)).take(data.len()));
         RecordBatch::try_new(
             schema,
             vec![
-                Arc::new(sources.finish()),
+                Arc::new(self.sources.finish()),
                 Arc::new(self.paths.finish()),
                 Arc::new(self.sizes.finish()),
                 Arc::new(data),
                 Arc::new(self.hashes.finish()),
             ],
         )
+    }
+}
+
+impl Display for Items {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        f.write_fmt(format_args!(
+            "Items (buf: {}/{}, written: {})",
+            self.sources.len(),
+            self.capacity,
+            self.total_written
+        ))
     }
 }
