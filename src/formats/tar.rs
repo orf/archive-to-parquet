@@ -1,24 +1,20 @@
-use crate::formats::{Format, MIN_FILE_SIZE};
+use crate::formats::common::add_archive_entry;
 use crate::items::{Items, ItemsError};
-use std::fmt::Display;
 use std::io::Read;
 use tar::Archive;
-use tracing::{debug, info, trace};
+use tracing::trace;
 
-#[tracing::instrument(skip(source, reader, items), fields(%source))]
 pub fn extract(
-    source: impl AsRef<str> + Display,
+    source: &str,
     reader: impl Read,
     items: &mut Items,
-    recursive: bool,
-) -> Result<(), ItemsError> {
-    info!("Extracting tar archive from {}", source.as_ref());
+    depth: usize,
+) -> Result<usize, ItemsError> {
     let mut archive = Archive::new(reader);
     let mut buffer = vec![];
+    let mut count = 0;
     for entry in archive.entries()? {
-        buffer.clear();
-
-        let mut entry = entry?;
+        let entry = entry?;
         if entry.header().entry_type() != tar::EntryType::Regular {
             continue;
         }
@@ -28,28 +24,8 @@ pub fn extract(
         let path = path.to_string();
         trace!(%path, size, "read path");
 
-        let data = if size < MIN_FILE_SIZE as u64 {
-            continue;
-        } else {
-            buffer.reserve(size as usize);
-            entry.read_to_end(&mut buffer)?;
-            buffer.as_slice()
-        };
-
-        if recursive {
-            if let Ok(format) = Format::detect_type(buffer.as_slice()) {
-                debug!(%path, %format, "detected format");
-                format.extract(
-                    format!("{}/{path}", source.as_ref()),
-                    buffer.as_slice(),
-                    items,
-                    false,
-                )?;
-                continue;
-            }
-        }
-        items.add_record(&source, path.as_str(), size, data)?;
+        count += add_archive_entry(source, items, depth, size, entry, path, &mut buffer)?;
     }
 
-    Ok(())
+    Ok(count)
 }

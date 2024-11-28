@@ -6,10 +6,11 @@ use arrow::array::{
 use arrow::datatypes::UInt64Type;
 use arrow::error::ArrowError;
 use parquet::errors::ParquetError;
-use sha2::digest::FixedOutputReset;
-use sha2::{Digest, Sha256};
+use sha2::{digest::FixedOutputReset, Digest, Sha256};
 use std::fmt::{Display, Formatter};
 use std::sync::Arc;
+
+pub const HASH_WIDTH: i32 = 32;
 
 #[derive(Debug, thiserror::Error)]
 pub enum ItemsError {
@@ -21,8 +22,8 @@ pub enum ItemsError {
     IO(#[from] std::io::Error),
 }
 
-pub struct Items {
-    output_file: OutputFile,
+pub struct Items<'a> {
+    output_file: &'a OutputFile,
     capacity: usize,
     pub total_written: usize,
     sources: StringViewBuilder,
@@ -32,8 +33,8 @@ pub struct Items {
     hashes: FixedSizeBinaryBuilder,
 }
 
-impl Items {
-    pub fn new_with_capacity(output_file: OutputFile, capacity: usize) -> Self {
+impl<'a> Items<'a> {
+    pub fn new_with_capacity(output_file: &'a OutputFile, capacity: usize) -> Self {
         Self {
             output_file,
             capacity,
@@ -42,7 +43,7 @@ impl Items {
             paths: StringViewBuilder::with_capacity(capacity),
             sizes: PrimitiveBuilder::with_capacity(capacity),
             data: BinaryViewBuilder::with_capacity(capacity),
-            hashes: FixedSizeBinaryBuilder::with_capacity(capacity, 32),
+            hashes: FixedSizeBinaryBuilder::with_capacity(capacity, HASH_WIDTH),
         }
     }
 
@@ -101,7 +102,7 @@ impl Items {
     }
 }
 
-impl Display for Items {
+impl Display for Items<'_> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         f.write_fmt(format_args!(
             "Items (buf: {}/{}, written: {})",

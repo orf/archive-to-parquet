@@ -1,3 +1,4 @@
+use crate::items::HASH_WIDTH;
 use arrow::array::RecordBatch;
 use arrow::datatypes::{DataType, Field, Schema};
 use parquet::arrow::arrow_writer::ArrowWriter;
@@ -9,7 +10,7 @@ use std::fs::File;
 use std::io::BufWriter;
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
-use tracing::info;
+use tracing::debug;
 
 fn make_schema() -> Arc<Schema> {
     let schema = Schema::new([
@@ -17,7 +18,11 @@ fn make_schema() -> Arc<Schema> {
         Arc::new(Field::new("path", DataType::Utf8View, false)),
         Arc::new(Field::new("size", DataType::UInt64, false)),
         Arc::new(Field::new("content", DataType::BinaryView, false)),
-        Arc::new(Field::new("hash", DataType::FixedSizeBinary(32), false)),
+        Arc::new(Field::new(
+            "hash",
+            DataType::FixedSizeBinary(HASH_WIDTH),
+            false,
+        )),
     ]);
     Arc::new(schema)
 }
@@ -34,7 +39,7 @@ impl OutputFile {
         let schema = make_schema();
 
         let mut props = WriterProperties::builder()
-            .set_compression(Compression::ZSTD(ZstdLevel::try_new(7)?))
+            .set_compression(Compression::ZSTD(ZstdLevel::try_new(3)?))
             .set_statistics_enabled(Default::default())
             .set_statistics_truncate_length(Some(1024))
             .set_column_bloom_filter_enabled("hash".into(), true);
@@ -53,12 +58,11 @@ impl OutputFile {
         })
     }
 
-    #[tracing::instrument(skip_all, fields(self=%self))]
-    pub fn write_items(&mut self, batch: RecordBatch) -> Result<(), ParquetError> {
-        info!(rows = batch.num_rows(), "writing");
+    pub fn write_items(&self, batch: RecordBatch) -> Result<(), ParquetError> {
+        debug!(rows = batch.num_rows(), "writing");
         let mut writer = self.writer.lock().expect("lock poisoned");
         writer.write(&batch)?;
-        info!(rows = batch.num_rows(), "written");
+        debug!(rows = batch.num_rows(), "written");
         Ok(())
     }
 }
