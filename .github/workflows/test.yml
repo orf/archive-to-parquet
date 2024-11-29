@@ -55,7 +55,7 @@ jobs:
           cache-on-failure: 'false'
 
       - name: Run check
-        run: cargo check
+        run: cargo build --bins
 
       - name: Run
         run: cargo run -- --help
