@@ -10,15 +10,13 @@ repository = "https://github.com/orf/archive-to-parquet"
 anyhow = "1.0.93"
 arrow = "53.3.0"
 byte-unit = "5.1.6"
-bytes = "1.8.0"
 clap = { version = "4.5.21", features = ["derive"] }
-derive-new = "0.7.0"
 derive_more = { version = "1.0.0", features = ["display"] }
 flate2 = "1.0.35"
 infer = "0.16.0"
 parquet = { version = "53.3.0", features = ["arrow"] }
 rayon = "1.10.0"
-sha2 = { version = "0.10.8", features = ["asm", "asm-aarch64"] }
+sha2 = { version = "0.10.8" }
 tar = "0.4.43"
 thiserror = "2.0.3"
 tracing = {version = "0.1.40"}
