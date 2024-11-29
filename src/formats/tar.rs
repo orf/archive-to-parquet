@@ -1,5 +1,6 @@
 use crate::formats::common::add_archive_entry;
 use crate::items::{Items, ItemsError};
+use crate::Limits;
 use std::io::Read;
 use tar::Archive;
 use tracing::trace;
@@ -8,7 +9,7 @@ pub fn extract(
     source: &str,
     reader: impl Read,
     items: &mut Items,
-    depth: usize,
+    limits: Limits,
 ) -> Result<usize, ItemsError> {
     let mut archive = Archive::new(reader);
     let mut buffer = vec![];
@@ -24,7 +25,7 @@ pub fn extract(
         let path = path.to_string();
         trace!(%path, size, "read path");
 
-        count += add_archive_entry(source, items, depth, size, entry, path, &mut buffer)?;
+        count += add_archive_entry(source, items, limits, size, entry, path, &mut buffer)?;
     }
 
     Ok(count)

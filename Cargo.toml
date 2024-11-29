@@ -9,6 +9,7 @@ repository = "https://github.com/orf/archive-to-parquet"
 [dependencies]
 anyhow = "1.0.93"
 arrow = "53.3.0"
+byte-unit = "5.1.6"
 bytes = "1.8.0"
 clap = { version = "4.5.21", features = ["derive"] }
 derive-new = "0.7.0"

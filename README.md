@@ -11,7 +11,7 @@ Features:
 
 ```shell
 $ skopeo copy docker://python:latest oci:docker-image/ --all
-$ archive-to-parquet output.parquet docker-image/blobs/sha256/* --depth=1
+$ archive-to-parquet output.parquet docker-image/blobs/**/*
 2024-11-28T22:45:52.885030Z  INFO extract: archive_to_parquet::formats: Output 5 records from docker-image/blobs/sha256/84bd722ec005c4b9a8d4ce74d1547245ee36e178a58fbca74ea8a88b83557a2a depth=0 self=tar.gz
 ...
 2024-11-28T22:45:59.885030Z  INFO All done. Wrote 234263 rows
@@ -28,6 +28,8 @@ Arguments:
   [PATHS]...  Input paths to read
 
 Options:
-  -d, --depth <DEPTH>  [default: 0]
-  -h, --help           Print help
+  -d, --depth <DEPTH>        Recursion depth How many times to recurse into nested archives
+      --min-size <MIN_SIZE>  Min file size to output. Files below this size are skipped [default: 300]
+      --max-size <MAX_SIZE>  Max file size to output. Files above this size are skipped
+  -h, --help                 Print help
 ```

@@ -3,12 +3,13 @@ use std::io::Read;
 use tracing::trace;
 // use crate::formats::common::fill_buffer;
 use crate::items::{Items, ItemsError};
+use crate::Limits;
 
 pub fn extract(
     source: &str,
     mut reader: impl Read,
     items: &mut Items,
-    depth: usize,
+    limits: Limits,
 ) -> Result<usize, ItemsError> {
     let mut count = 0;
     let mut buffer = vec![];
@@ -25,7 +26,7 @@ pub fn extract(
         let size = entry.size();
         trace!(?path, size, "read path");
 
-        count += add_archive_entry(source, items, depth, size, entry, path, &mut buffer)?;
+        count += add_archive_entry(source, items, limits, size, entry, path, &mut buffer)?;
     }
     Ok(count)
 }

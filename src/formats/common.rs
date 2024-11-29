@@ -1,5 +1,6 @@
-use crate::formats::{Format, MIN_FILE_SIZE};
+use crate::formats::Format;
 use crate::items::{Items, ItemsError};
+use crate::Limits;
 use std::io;
 use std::io::Read;
 use tracing::debug;
@@ -7,10 +8,11 @@ use tracing::debug;
 fn fill_buffer(
     mut reader: impl Read,
     size: u64,
+    limits: Limits,
     buffer: &mut Vec<u8>,
 ) -> io::Result<Option<&[u8]>> {
     buffer.clear();
-    if size < MIN_FILE_SIZE as u64 {
+    if !limits.check_file_size(size) {
         Ok(None)
     } else {
         buffer.reserve(size as usize);
@@ -22,20 +24,21 @@ fn fill_buffer(
 pub fn add_archive_entry(
     source: &str,
     items: &mut Items,
-    depth: usize,
+    mut limits: Limits,
     size: u64,
     entry: impl Read,
     path: String,
     buffer: &mut Vec<u8>,
 ) -> Result<usize, ItemsError> {
-    let Some(data) = fill_buffer(entry, size, buffer)? else {
+    let Some(data) = fill_buffer(entry, size, limits, buffer)? else {
         return Ok(0);
     };
 
-    if depth > 0 {
-        if let Ok(format) = Format::detect_type(data) {
+    if limits.depth > 0 {
+        if let Ok(format) = Format::detect_type(data, limits) {
             debug!(%path, %format, "detected format");
-            let count = format.extract(&format!("{}/{}", source, path), data, items, depth - 1)?;
+            limits.depth -= 1;
+            let count = format.extract(&format!("{}/{}", source, path), data, items, limits)?;
             return Ok(count);
         }
     }

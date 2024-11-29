@@ -4,13 +4,17 @@ use arrow::datatypes::{DataType, Field, Schema};
 use parquet::arrow::arrow_writer::ArrowWriter;
 use parquet::basic::{Compression, ZstdLevel};
 use parquet::errors::ParquetError;
-use parquet::file::properties::WriterProperties;
+use parquet::file::properties::{EnabledStatistics, WriterProperties, WriterVersion};
 use std::fmt::{Display, Formatter};
 use std::fs::File;
 use std::io::BufWriter;
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
 use tracing::debug;
+
+const BLOOM_FILTER_FIELDS: &[&str] = &["source", "path", "hash"];
+const STATISTICS_FIELDS: &[&str] = &["source", "path", "size", "hash"];
+const DICTIONARY_FIELDS: &[&str] = &["source", "path"];
 
 fn make_schema() -> Arc<Schema> {
     let schema = Schema::new([
@@ -40,14 +44,17 @@ impl OutputFile {
 
         let mut props = WriterProperties::builder()
             .set_compression(Compression::ZSTD(ZstdLevel::try_new(3)?))
-            .set_statistics_enabled(Default::default())
-            .set_statistics_truncate_length(Some(1024))
-            .set_column_bloom_filter_enabled("hash".into(), true);
+            .set_writer_version(WriterVersion::PARQUET_2_0)
+            .set_write_batch_size(1024 * 1024);
 
-        for column in ["source", "path"] {
-            props = props
-                .set_column_bloom_filter_enabled(column.into(), true)
-                .set_column_dictionary_enabled(column.into(), true)
+        for field in BLOOM_FILTER_FIELDS {
+            props = props.set_column_bloom_filter_enabled((*field).into(), true);
+        }
+        for field in STATISTICS_FIELDS {
+            props = props.set_column_statistics_enabled((*field).into(), EnabledStatistics::Chunk);
+        }
+        for field in DICTIONARY_FIELDS {
+            props = props.set_column_dictionary_enabled((*field).into(), true);
         }
 
         let writer = ArrowWriter::try_new(writer, schema.clone(), Some(props.build()))?;

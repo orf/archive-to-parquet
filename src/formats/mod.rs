@@ -1,4 +1,5 @@
 use crate::items::{Items, ItemsError};
+use crate::Limits;
 use flate2::read::GzDecoder;
 use std::fs::File;
 use std::io::Read;
@@ -11,7 +12,6 @@ mod zip;
 
 // Tar requires ~260 bytes to detect, gz and zip requires a lot less
 const BUF_SIZE: usize = 280;
-const MIN_FILE_SIZE: usize = BUF_SIZE;
 
 #[derive(Debug, thiserror::Error)]
 pub enum FormatError {
@@ -40,31 +40,31 @@ impl Format {
         source: &str,
         reader: impl Read,
         items: &mut Items,
-        depth: usize,
+        limits: Limits,
     ) -> Result<usize, ItemsError> {
         let file_count = match self {
-            Format::Tar => tar::extract(source, reader, items, depth),
+            Format::Tar => tar::extract(source, reader, items, limits),
             Format::TarGz => {
                 let decoder = GzDecoder::new(reader);
-                tar::extract(source, decoder, items, depth)
+                tar::extract(source, decoder, items, limits)
             }
-            Format::Zip => zip::extract(source, reader, items, depth),
+            Format::Zip => zip::extract(source, reader, items, limits),
         }?;
         info!("Output {file_count} records from {source}");
         Ok(file_count)
     }
 
     #[inline(always)]
-    fn detect_type(mut reader: impl Read) -> Result<Self, FormatError> {
+    fn detect_type(mut reader: impl Read, limits: Limits) -> Result<Self, FormatError> {
         let mut buf = [0u8; BUF_SIZE];
-        let buf = Self::read_slice(&mut reader, &mut buf)?;
+        let buf = Self::read_slice(&mut reader, &mut buf, limits)?;
         if Self::is_tar(buf) {
             debug!("Detected tar format");
             return Ok(Self::Tar);
         } else if Self::is_zip(buf) {
             debug!("Detected zip format");
             return Ok(Self::Zip);
-        } else if Self::is_tar_gz(buf)? {
+        } else if Self::is_tar_gz(buf, limits)? {
             debug!("Detected tar.gz format");
             return Ok(Self::TarGz);
         }
@@ -79,33 +79,33 @@ impl Format {
         infer::archive::is_tar(slice)
     }
 
-    fn is_tar_gz(slice: &[u8]) -> Result<bool, FormatError> {
+    fn is_tar_gz(slice: &[u8], limits: Limits) -> Result<bool, FormatError> {
         if !infer::archive::is_gz(slice) {
             return Ok(false);
         }
         let mut decoder = GzDecoder::new(slice);
         let buf = &mut [0u8; BUF_SIZE];
-        let slice = Self::read_slice(&mut decoder, buf)?;
+        let slice = Self::read_slice(&mut decoder, buf, limits)?;
         Ok(Self::is_tar(slice))
     }
 
-    fn read_slice(mut reader: impl Read, buf: &mut [u8; BUF_SIZE]) -> Result<&[u8], FormatError> {
+    fn read_slice(
+        mut reader: impl Read,
+        buf: &mut [u8; BUF_SIZE],
+        limits: Limits,
+    ) -> Result<&[u8], FormatError> {
         let read = reader.read(buf).expect("Error reading");
         if read == 0 {
             return Err(FormatError::Empty);
-        } else if read < MIN_FILE_SIZE {
+        } else if (read as u64) < limits.min_file_size {
             return Err(FormatError::UnsupportedFormat);
         }
         Ok(&buf[0..read])
     }
-}
-
-impl TryFrom<&Path> for Format {
-    type Error = FormatError;
 
     #[tracing::instrument(name = "from_path")]
-    fn try_from(value: &Path) -> Result<Self, Self::Error> {
-        let reader = File::open(value)?;
-        Self::detect_type(reader)
+    pub fn try_from_path(path: &Path, limits: Limits) -> Result<Self, FormatError> {
+        let reader = File::open(path)?;
+        Self::detect_type(reader, limits)
     }
 }
