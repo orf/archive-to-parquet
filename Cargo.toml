@@ -7,10 +7,10 @@ license = "MIT"
 repository = "https://github.com/orf/archive-to-parquet"
 
 [dependencies]
-anyhow = "1.0.93"
+anyhow = "1.0.94"
 arrow = "53.3.0"
 byte-unit = "5.1.6"
-clap = { version = "4.5.21", features = ["derive"] }
+clap = { version = "4.5.23", features = ["derive"] }
 derive_more = { version = "1.0.0", features = ["display"] }
 flate2 = "1.0.35"
 infer = "0.16.0"
@@ -18,9 +18,9 @@ parquet = { version = "53.3.0", features = ["arrow"] }
 rayon = "1.10.0"
 sha2 = { version = "0.10.8" }
 tar = "0.4.43"
-thiserror = "2.0.3"
+thiserror = "2.0.4"
 tracing = {version = "0.1.40"}
-tracing-subscriber = { version = "0.3.18", features = ["env-filter"] }
+tracing-subscriber = { version = "0.3.19", features = ["env-filter"] }
 zip = "2.2.1"
 
 [profile.lto]
