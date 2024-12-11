@@ -28,8 +28,9 @@ Arguments:
   [PATHS]...  Input paths to read
 
 Options:
-  -d, --depth <DEPTH>        Recursion depth How many times to recurse into nested archives
-      --min-size <MIN_SIZE>  Min file size to output. Files below this size are skipped [default: 300]
-      --max-size <MAX_SIZE>  Max file size to output. Files above this size are skipped
-  -h, --help                 Print help
+  -m, --max-depth <MAX_DEPTH>  Recursion depth How many times to recurse into nested archives
+      --min-size <MIN_SIZE>    Min file size to output. Files below this size are skipped [default: 300b]
+      --max-size <MAX_SIZE>    Max file size to output. Files above this size are skipped
+      --unique                 Only output unique files by hash
+  -h, --help                   Print help
 ```

@@ -34,7 +34,7 @@ pub enum Format {
 }
 
 impl Format {
-    #[tracing::instrument(skip(self, source, reader, items), fields(%self, %source))]
+    #[tracing::instrument(skip(self, source, reader, items), fields(%self, %source, %limits))]
     pub fn extract(
         &self,
         source: &str,
@@ -103,7 +103,7 @@ impl Format {
         Ok(&buf[0..read])
     }
 
-    #[tracing::instrument(name = "from_path")]
+    #[tracing::instrument(name = "from_path", fields(limits=%limits))]
     pub fn try_from_path(path: &Path, limits: Limits) -> Result<Self, FormatError> {
         let reader = File::open(path)?;
         Self::detect_type(reader, limits)

@@ -34,10 +34,10 @@ pub fn add_archive_entry(
         return Ok(0);
     };
 
-    if limits.depth > 0 {
+    if limits.max_depth > 0 {
         if let Ok(format) = Format::detect_type(data, limits) {
             debug!(%path, %format, "detected format");
-            limits.depth -= 1;
+            limits.max_depth -= 1;
             let count = format.extract(&format!("{}/{}", source, path), data, items, limits)?;
             return Ok(count);
         }
