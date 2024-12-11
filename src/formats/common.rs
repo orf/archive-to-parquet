@@ -1,9 +1,10 @@
 use crate::formats::Format;
 use crate::items::{Items, ItemsError};
 use crate::Limits;
+use simdutf8::basic::Utf8Error;
 use std::io;
 use std::io::Read;
-use tracing::debug;
+use tracing::{debug, trace};
 
 fn fill_buffer(
     mut reader: impl Read,
@@ -19,6 +20,10 @@ fn fill_buffer(
         reader.read_to_end(buffer)?;
         Ok(Some(buffer.as_slice()))
     }
+}
+
+fn decode_text(data: &[u8]) -> Result<&str, Utf8Error> {
+    simdutf8::basic::from_utf8(data)
 }
 
 pub fn add_archive_entry(
@@ -43,7 +48,20 @@ pub fn add_archive_entry(
         }
     }
 
-    items.add_record(source, path, size, data)?;
+    if limits.only_text {
+        let decoded = decode_text(data);
+        match decoded {
+            Ok(str) => {
+                items.add_text_record(source, path, size, str)?;
+            }
+            Err(_) => {
+                trace!("Skipping non-text file {path}");
+                return Ok(0);
+            }
+        }
+    } else {
+        items.add_record(source, path, size, data)?;
+    }
 
     Ok(1)
 }

@@ -32,5 +32,6 @@ Options:
       --min-size <MIN_SIZE>    Min file size to output. Files below this size are skipped [default: 300b]
       --max-size <MAX_SIZE>    Max file size to output. Files above this size are skipped
       --unique                 Only output unique files by hash
+      --only-text              Only output text files, skipping binary files
   -h, --help                   Print help
 ```

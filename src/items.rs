@@ -1,7 +1,7 @@
 use crate::output::OutputFile;
 use arrow::array::{
-    ArrayBuilder, BinaryViewBuilder, FixedSizeBinaryBuilder, PrimitiveBuilder, RecordBatch,
-    StringViewBuilder,
+    ArrayBuilder, ArrayRef, BinaryViewBuilder, FixedSizeBinaryBuilder, PrimitiveBuilder,
+    RecordBatch, StringViewBuilder,
 };
 use arrow::datatypes::UInt64Type;
 use arrow::error::ArrowError;
@@ -30,11 +30,17 @@ pub struct Items<'a> {
     paths: StringViewBuilder,
     sizes: PrimitiveBuilder<UInt64Type>,
     data: BinaryViewBuilder,
+    text_data: StringViewBuilder,
     hashes: FixedSizeBinaryBuilder,
+    only_text: bool,
 }
 
 impl<'a> Items<'a> {
-    pub fn new_with_capacity(output_file: &'a OutputFile, capacity: usize) -> Self {
+    pub fn new_with_capacity(
+        output_file: &'a OutputFile,
+        capacity: usize,
+        only_text: bool,
+    ) -> Self {
         Self {
             output_file,
             capacity,
@@ -43,7 +49,9 @@ impl<'a> Items<'a> {
             paths: StringViewBuilder::with_capacity(capacity),
             sizes: PrimitiveBuilder::with_capacity(capacity),
             data: BinaryViewBuilder::with_capacity(capacity),
+            text_data: StringViewBuilder::with_capacity(capacity),
             hashes: FixedSizeBinaryBuilder::with_capacity(capacity, HASH_WIDTH),
+            only_text,
         }
     }
 
@@ -54,10 +62,34 @@ impl<'a> Items<'a> {
         size: u64,
         data: &[u8],
     ) -> Result<(), ItemsError> {
+        assert!(!self.only_text, "add_record called when only_text is true");
+
         self.sources.append_value(source.as_ref());
         self.paths.append_value(paths.as_ref());
         self.sizes.append_value(size);
         self.data.append_value(data);
+        if self.sources.len() >= self.capacity {
+            self.flush()?;
+        }
+        Ok(())
+    }
+
+    pub fn add_text_record(
+        &mut self,
+        source: impl AsRef<str>,
+        paths: impl AsRef<str>,
+        size: u64,
+        data: &str,
+    ) -> Result<(), ItemsError> {
+        assert!(
+            self.only_text,
+            "add_text_record called when only_text is false"
+        );
+
+        self.sources.append_value(source.as_ref());
+        self.paths.append_value(paths.as_ref());
+        self.sizes.append_value(size);
+        self.text_data.append_value(data);
         if self.sources.len() >= self.capacity {
             self.flush()?;
         }
@@ -74,12 +106,9 @@ impl<'a> Items<'a> {
         Ok(())
     }
 
-    fn create_record_batch_and_reset(&mut self) -> Result<RecordBatch, ArrowError> {
-        let schema = self.output_file.schema.clone();
-        let data = self.data.finish();
-
+    fn hash_iterator(&mut self, data: impl Iterator<Item = Option<impl AsRef<[u8]>>>) {
         let mut hasher = Sha256::new();
-        for data in data.iter() {
+        for data in data {
             if let Some(data) = data {
                 hasher.update(data);
             }
@@ -88,6 +117,19 @@ impl<'a> Items<'a> {
                 .append_value(hashed)
                 .expect("Error appending hash");
         }
+    }
+
+    fn create_record_batch_and_reset(&mut self) -> Result<RecordBatch, ArrowError> {
+        let schema = self.output_file.schema.clone();
+        let data: ArrayRef = if !self.only_text {
+            let binary_data = self.data.finish();
+            self.hash_iterator(binary_data.iter());
+            Arc::new(binary_data)
+        } else {
+            let text_data = self.text_data.finish();
+            self.hash_iterator(text_data.iter());
+            Arc::new(text_data)
+        };
 
         RecordBatch::try_new(
             schema,
@@ -95,8 +137,8 @@ impl<'a> Items<'a> {
                 Arc::new(self.sources.finish()),
                 Arc::new(self.paths.finish()),
                 Arc::new(self.sizes.finish()),
-                Arc::new(data),
                 Arc::new(self.hashes.finish()),
+                Arc::new(data),
             ],
         )
     }

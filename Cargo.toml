@@ -19,9 +19,10 @@ infer = "0.16.0"
 parquet = { version = "53.3.0", features = ["arrow"] }
 rayon = "1.10.0"
 sha2 = { version = "0.10.8" }
+simdutf8 = "0.1.5"
 tar = "0.4.43"
 thiserror = "2.0.6"
-tracing = {version = "0.1.40"}
+tracing = {version = "0.1.40", features = ["release_max_level_debug"]}
 tracing-subscriber = { version = "0.3.19", features = ["env-filter"] }
 zip = "2.2.1"
 

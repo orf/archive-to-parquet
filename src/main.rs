@@ -38,6 +38,10 @@ struct Args {
     /// Only output unique files by hash
     #[clap(long)]
     unique: bool,
+
+    /// Only output text files, skipping binary files
+    #[clap(long)]
+    only_text: bool,
 }
 
 #[derive(Debug, Copy, Clone)]
@@ -45,6 +49,7 @@ pub struct Limits {
     min_file_size: Byte,
     max_file_size: Option<Byte>,
     max_depth: usize,
+    only_text: bool,
 }
 
 impl Display for Limits {
@@ -56,6 +61,7 @@ impl Display for Limits {
         if self.max_depth != 0 {
             write!(f, ", max-depth={}", self.max_depth)?
         }
+        write!(f, ", only_text={}", self.only_text)?;
         Ok(())
     }
 }
@@ -90,15 +96,16 @@ fn main() -> anyhow::Result<()> {
         min_file_size: args.min_size,
         max_file_size: args.max_size,
         max_depth: args.max_depth.unwrap_or(0),
+        only_text: args.only_text,
     };
 
-    let output = output::OutputFile::new(args.output, args.unique)?;
-    let items: Vec<_> = args
+    let output = output::OutputFile::new(args.output, args.unique, args.only_text)?;
+    let items: Result<Vec<_>, _> = args
         .paths
         .into_par_iter()
         .filter(|p| p.is_file())
         .map(|path| {
-            let mut items = Items::new_with_capacity(&output, 1024 * 80);
+            let mut items = Items::new_with_capacity(&output, 1024, args.only_text);
             match Format::try_from_path(path.as_path(), limits) {
                 Ok(format) => {
                     info!("Reading from {path:?}");
@@ -113,8 +120,11 @@ fn main() -> anyhow::Result<()> {
             Ok::<_, ItemsError>(items.total_written)
         })
         .collect();
-    let total_read: usize = items.into_iter().map(|r| r.unwrap_or(0)).sum();
+    let items = items?;
+    let total_read: usize = items.into_iter().sum();
     let total_written = output.total_rows_written();
+    info!("Finishing writing output..");
+    drop(output);
     info!(
         "All done. Read {} rows, output {} rows after deduplication",
         total_read, total_written

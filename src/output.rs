@@ -19,17 +19,22 @@ const BLOOM_FILTER_FIELDS: &[&str] = &["source", "path", "hash"];
 const STATISTICS_FIELDS: &[&str] = &["source", "path", "size", "hash"];
 const DICTIONARY_FIELDS: &[&str] = &["source", "path"];
 
-fn make_schema() -> Arc<Schema> {
+fn make_schema(only_text: bool) -> Arc<Schema> {
+    let content_type = if only_text {
+        DataType::Utf8View
+    } else {
+        DataType::BinaryView
+    };
     let schema = Schema::new([
         Arc::new(Field::new("source", DataType::Utf8View, false)),
         Arc::new(Field::new("path", DataType::Utf8View, false)),
         Arc::new(Field::new("size", DataType::UInt64, false)),
-        Arc::new(Field::new("content", DataType::BinaryView, false)),
         Arc::new(Field::new(
             "hash",
             DataType::FixedSizeBinary(HASH_WIDTH),
             false,
         )),
+        Arc::new(Field::new("content", content_type, false)),
     ]);
     Arc::new(schema)
 }
@@ -48,20 +53,21 @@ pub struct OutputFile {
 }
 
 impl OutputFile {
-    pub fn new(path: PathBuf, unique: bool) -> anyhow::Result<Self> {
+    pub fn new(path: PathBuf, unique: bool, only_text: bool) -> anyhow::Result<Self> {
         let writer = BufWriter::new(File::create(&path)?);
-        let schema = make_schema();
+        let schema = make_schema(only_text);
 
         let mut props = WriterProperties::builder()
             .set_compression(Compression::ZSTD(ZstdLevel::try_new(3)?))
             .set_writer_version(WriterVersion::PARQUET_2_0)
+            .set_dictionary_enabled(false)
             .set_write_batch_size(1024 * 1024);
 
         for field in BLOOM_FILTER_FIELDS {
             props = props.set_column_bloom_filter_enabled((*field).into(), true);
         }
         for field in STATISTICS_FIELDS {
-            props = props.set_column_statistics_enabled((*field).into(), EnabledStatistics::Chunk);
+            props = props.set_column_statistics_enabled((*field).into(), EnabledStatistics::Page);
         }
         for field in DICTIONARY_FIELDS {
             props = props.set_column_dictionary_enabled((*field).into(), true);
@@ -146,5 +152,6 @@ impl Drop for OutputFile {
             .writer
             .finish()
             .expect("failed to finish writing");
+        info!("Output file {path} written", path = self.path.display());
     }
 }

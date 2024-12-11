@@ -163,6 +163,7 @@ dependencies = [
  "parquet",
  "rayon",
  "sha2",
+ "simdutf8",
  "tar",
  "thiserror",
  "tracing",
