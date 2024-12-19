@@ -1,31 +1,30 @@
-mod formats;
-mod items;
-mod output;
-
-use crate::formats::Format;
-use crate::items::{Items, ItemsError};
-use byte_unit::Byte;
+use anyhow::bail;
+use byte_unit::{Byte, Unit};
+use bytes::Bytes;
 use clap::Parser;
-use std::fmt::{Display, Formatter};
-use std::io::BufReader;
-use std::path::PathBuf;
-use tracing::{info, warn, Level};
+use std::io::{sink, stderr, stdout};
+use std::num::NonZeroUsize;
+use std::path::{Path, PathBuf};
+use tracing::{error, info, warn, Level};
 use tracing_subscriber::layer::SubscriberExt;
 use tracing_subscriber::util::SubscriberInitExt;
 use tracing_subscriber::{fmt, EnvFilter};
 
-use rayon::prelude::*;
+use archive_to_parquet::{
+    default_threads, ExtractionOptions, Extractor, OutputSink, ParquetCompression,
+};
 
 #[derive(Debug, Clone, Parser)]
 struct Args {
     /// Output Parquet file to create
     output: PathBuf,
     /// Input paths to read
+    #[clap(required = true)]
     paths: Vec<PathBuf>,
     /// Recursion depth
     /// How many times to recurse into nested archives
     #[clap(short, long)]
-    max_depth: Option<usize>,
+    max_depth: Option<NonZeroUsize>,
     /// Min file size to output.
     /// Files below this size are skipped
     #[clap(long, default_value = "300b")]
@@ -42,43 +41,19 @@ struct Args {
     /// Only output text files, skipping binary files
     #[clap(long)]
     only_text: bool,
-}
 
-#[derive(Debug, Copy, Clone)]
-pub struct Limits {
-    min_file_size: Byte,
-    max_file_size: Option<Byte>,
-    max_depth: usize,
-    only_text: bool,
-}
+    /// Only output text files, skipping binary files
+    #[clap(long, action)]
+    ignore_unsupported: bool,
 
-impl Display for Limits {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "min_size={:#}", self.min_file_size)?;
-        if let Some(max_file_size) = self.max_file_size {
-            write!(f, ", max_size={:#}", max_file_size)?;
-        }
-        if self.max_depth != 0 {
-            write!(f, ", max-depth={}", self.max_depth)?
-        }
-        write!(f, ", only_text={}", self.only_text)?;
-        Ok(())
-    }
-}
+    /// Number of threads to use when extracting.
+    /// Defaults to number of CPU cores
+    #[clap(long, default_value_t = default_threads())]
+    threads: NonZeroUsize,
 
-impl Limits {
-    pub fn check_file_size(&self, size: u64) -> bool {
-        if size < self.min_file_size {
-            return false;
-        }
-        if let Some(max_file_size) = self.max_file_size {
-            if size > max_file_size {
-                return false;
-            }
-        }
-
-        true
-    }
+    /// Compression to use
+    #[clap(long, default_value = "zstd(3)")]
+    compression: ParquetCompression,
 }
 
 fn main() -> anyhow::Result<()> {
@@ -86,48 +61,94 @@ fn main() -> anyhow::Result<()> {
         .with_default_directive(Level::INFO.into())
         .from_env()?;
     tracing_subscriber::registry()
-        .with(fmt::layer().compact().with_file(false))
+        .with(fmt::layer().compact().with_file(false).with_writer(stderr))
         .with(env_filter)
         .init();
 
     let args = Args::parse();
 
-    let limits = Limits {
+    let opts = ExtractionOptions {
         min_file_size: args.min_size,
         max_file_size: args.max_size,
-        max_depth: args.max_depth.unwrap_or(0),
+        max_depth: args.max_depth,
         only_text: args.only_text,
+        threads: args.threads,
+        unique: args.unique,
+        ignore_unsupported: args.ignore_unsupported,
+        compression: args.compression,
     };
 
-    let output = output::OutputFile::new(args.output, args.unique, args.only_text)?;
-    let items: Result<Vec<_>, _> = args
-        .paths
-        .into_par_iter()
-        .filter(|p| p.is_file())
-        .map(|path| {
-            let mut items = Items::new_with_capacity(&output, 1024, args.only_text);
-            match Format::try_from_path(path.as_path(), limits) {
-                Ok(format) => {
-                    info!("Reading from {path:?}");
-                    let reader = BufReader::with_capacity(1024 * 1024, std::fs::File::open(&path)?);
-                    format.extract(&path.to_string_lossy(), reader, &mut items, limits)?;
-                    items.flush()?;
-                }
-                Err(e) => {
-                    warn!("Failed to detect format for {}: {}", path.display(), e);
+    if args.output.to_string_lossy() == "-" {
+        let extractor = Extractor::with_writer(stdout(), opts)?;
+        do_extraction(extractor, args.paths)?;
+    } else if args.output.to_string_lossy() == "/dev/null" {
+        let extractor = Extractor::with_writer(sink(), opts)?;
+        do_extraction(extractor, args.paths)?;
+    } else {
+        let extractor = Extractor::with_path(args.output, opts)?;
+        do_extraction(extractor, args.paths)?;
+    }
+
+    Ok(())
+}
+
+fn do_extraction<T: OutputSink>(
+    mut extractor: Extractor<T>,
+    paths: Vec<PathBuf>,
+) -> anyhow::Result<()> {
+    let mut errors = vec![];
+
+    // if cfg!(feature = "bench") {
+    //     let cloned = extractor.input_contents_mut().cloned_buffers()?;
+    //     extractor.set_input_contents(cloned);
+    // }
+
+    match paths.as_slice() {
+        [first] if first.as_os_str() == "-" => {
+            info!("Reading from stdin..");
+            // Read from stdin
+            let mut buffer = Vec::with_capacity(1024 * 1024);
+            std::io::copy(&mut std::io::stdin().lock(), &mut buffer)?;
+            let read_bytes = byte_unit::Byte::from(buffer.len()).get_adjusted_unit(Unit::MB);
+            info!("Read {:#.1} from stdin", read_bytes);
+            extractor.add_buffer(Path::new("stdin").to_path_buf(), Bytes::from(buffer))?;
+        }
+        paths => {
+            for path in paths {
+                if path.is_dir() {
+                    let dir_errors = extractor.add_directory(path);
+                    errors.extend(dir_errors);
+                } else if path.is_file() {
+                    if let Err(e) = extractor.add_path(path.clone()) {
+                        errors.push(e);
+                    }
+                } else {
+                    warn!("Path {:?} is neither a file or a directory, skipping", path);
                 }
             }
-            Ok::<_, ItemsError>(items.total_written)
-        })
-        .collect();
-    let items = items?;
-    let total_read: usize = items.into_iter().sum();
-    let total_written = output.total_rows_written();
-    info!("Finishing writing output..");
-    drop(output);
+        }
+    }
+
+    for err in errors {
+        warn!("{}", err);
+    }
+
+    if !extractor.has_input_files() {
+        bail!("No input files found")
+    }
+
     info!(
-        "All done. Read {} rows, output {} rows after deduplication",
-        total_read, total_written
+        "Extracting from {} input files",
+        extractor.input_file_count()
     );
+    let counts = extractor.extract_with_callback(|path, result| match result {
+        Ok(count) => {
+            info!("{path:?} - {count}");
+        }
+        Err(e) => {
+            error!("{path:?} - error: {e}");
+        }
+    })?;
+    info!("All done: {counts}");
     Ok(())
 }

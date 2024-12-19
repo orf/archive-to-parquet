@@ -1,17 +1,17 @@
 use crate::formats::common::add_archive_entry;
+use crate::formats::Counts;
+use crate::{ExtractError, ExtractionOptions, Items, OutputSink};
 use std::io::Read;
+use std::path::Path;
 use tracing::trace;
-// use crate::formats::common::fill_buffer;
-use crate::items::{Items, ItemsError};
-use crate::Limits;
 
-pub fn extract(
-    source: &str,
+pub fn extract<T: OutputSink>(
+    source: &Path,
     mut reader: impl Read,
-    items: &mut Items,
-    limits: Limits,
-) -> Result<usize, ItemsError> {
-    let mut count = 0;
+    items: &mut Items<T>,
+    options: ExtractionOptions,
+) -> Result<Counts, ExtractError> {
+    let mut counts = Counts::default();
     let mut buffer = vec![];
 
     loop {
@@ -20,13 +20,15 @@ pub fn extract(
         };
 
         if !entry.is_file() {
+            counts.skipped();
             continue;
         }
+
         let path = entry.name().to_string();
         let size = entry.size();
         trace!(?path, size, "read path");
 
-        count += add_archive_entry(source, items, limits, size, entry, path, &mut buffer)?;
+        counts += add_archive_entry(source, items, options, size, entry, path, &mut buffer)?;
     }
-    Ok(count)
+    Ok(counts)
 }

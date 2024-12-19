@@ -1,32 +1,40 @@
 use crate::formats::common::add_archive_entry;
-use crate::items::{Items, ItemsError};
-use crate::Limits;
+use crate::formats::Counts;
+use crate::{ExtractError, ExtractionOptions, Items, OutputSink};
 use std::io::Read;
+use std::path::Path;
 use tar::Archive;
 use tracing::trace;
 
-pub fn extract(
-    source: &str,
+pub fn extract<T: OutputSink>(
+    source: &Path,
     reader: impl Read,
-    items: &mut Items,
-    limits: Limits,
-) -> Result<usize, ItemsError> {
+    items: &mut Items<T>,
+    options: ExtractionOptions,
+) -> Result<Counts, ExtractError> {
     let mut archive = Archive::new(reader);
     let mut buffer = vec![];
-    let mut count = 0;
+    let mut counts = Counts::default();
     for entry in archive.entries()? {
         let entry = entry?;
         if entry.header().entry_type() != tar::EntryType::Regular {
+            counts.skipped();
             continue;
         }
-        let Ok(path) = entry.path() else { continue };
-        let Some(path) = path.to_str() else { continue };
+        let Ok(path) = entry.path() else {
+            counts.skipped();
+            continue;
+        };
+        let Some(path) = path.to_str() else {
+            counts.skipped();
+            continue;
+        };
         let size = entry.header().size()?;
         let path = path.to_string();
-        trace!(%path, size, "read path");
+        trace!(%path, size, ?counts, "read path");
 
-        count += add_archive_entry(source, items, limits, size, entry, path, &mut buffer)?;
+        counts += add_archive_entry(source, items, options, size, entry, path, &mut buffer)?;
     }
 
-    Ok(count)
+    Ok(counts)
 }

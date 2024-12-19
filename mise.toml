@@ -1,0 +1,74 @@
+[tools]
+python = "3.12"
+rust = "latest"
+"cargo:flamegraph" = "latest"
+
+[tasks.test-data-gping]
+description = "Download gping source code"
+run = [
+    "mkdir -p test_data/gping/",
+    "rm -f test_data/gping/*",
+    "wget https://github.com/orf/gping/archive/e66b02167fa0cb2c5bae957e730d19ac9c22de47.zip -O test_data/gping/archive.zip",
+    "wget https://github.com/orf/gping/archive/e66b02167fa0cb2c5bae957e730d19ac9c22de47.tar.gz -O test_data/gping/archive.tar.gz",
+    "cat test_data/gping/archive.tar.gz | gzip -d > test_data/gping/archive.tar"
+]
+outputs = ["test_data/gping/archive.zip", "test_data/gping/archive.tar.gz", "test_data/gping/archive.tar"]
+
+[tasks.test-data-linux]
+description = "Download linux source code"
+run = [
+    "mkdir -p test_data/linux/",
+    "rm -f test_data/linux/*",
+    "wget https://github.com/torvalds/linux/archive/a99b4a369a5495dbb625e1dfb5cd7a5ff6ba4bd5.zip -O test_data/linux/archive.zip",
+    "wget https://github.com/torvalds/linux/archive/a99b4a369a5495dbb625e1dfb5cd7a5ff6ba4bd5.tar.gz -O test_data/linux/archive.tar.gz",
+    "cat test_data/linux/archive.tar.gz | gzip -d > test_data/linux/archive.tar"
+]
+outputs = ["test_data/linux/archive.zip", "test_data/linux/archive.tar.gz", "test_data/linux/archive.tar"]
+
+[tasks.test-data-docker]
+description = "Download images"
+run = [
+    "mkdir -p test_data/python/",
+    "rm -f test_data/python/blobs/**/*",
+    "skopeo copy --all docker://python:latest oci:test_data/python/ --image-parallel-copies=10"
+]
+sources = ["test_data/python/index.json"]
+
+[tasks.test-data-archives]
+description = "Create archives"
+run = [
+    "mkdir -p test_data/archives/",
+    "rm -rf test_data/archives/*",
+    # Initial
+    "tar czvf test_data/archives/initial.tar.gz --exclude 'test_data/*' --exclude='target/*' .",
+    "zip -r test_data/archives/initial.zip . -x target/\\* test_data/\\*",
+    # Recursive
+    "tar czvf test_data/archives/recursive.tar.gz test_data/archives/initial*",
+    "zip -r test_data/archives/recursive.zip test_data/archives/initial*",
+]
+outputs = ["test_data/archives/*.zip", "test_data/archives/*.tar.gz"]
+
+[tasks.bench]
+description = "Run benchmarks"
+run = "cargo bench --quiet -F bench"
+depends = ["test-data-linux", "test-data-gping"]
+env = { RUST_BACKTRACE = '1' }
+
+[tasks.bench-opt]
+description = "Run benchmarks"
+run = "cargo bench --quiet -F bench --profile=bench-opt"
+depends = ["test-data-linux", "test-data-gping"]
+env = { RUSTFLAGS = '-C target_cpu=native', RUST_BACKTRACE = '1' }
+
+[tasks.flamegraph]
+description = "Generate flamegraph profile"
+run = """
+cargo flamegraph -f bench --root --profile=flamegraph -- \
+    /dev/null test_data/python/blobs/sha256/ --unique --compression=uncompressed
+"""
+depends = ["test-data-docker"]
+env = { RUSTFLAGS = '-C target_cpu=native', RUST_BACKTRACE = '1' }
+
+[tasks.build-release]
+description = "Build release"
+run = "cargo build --release --bins"
