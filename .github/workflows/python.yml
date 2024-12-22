@@ -47,12 +47,13 @@ jobs:
           target: ${{ matrix.platform.target }}
           args: --release --out dist --find-interpreter
           sccache: 'true'
-          manylinux: auto
+          manylinux: 2_28
       - name: Upload wheels
         uses: actions/upload-artifact@v4
         with:
           name: wheels-linux-${{ matrix.platform.target }}
           path: dist
+          retention-days: 5
 
   musllinux:
     runs-on: ${{ matrix.platform.runner }}
@@ -84,6 +85,7 @@ jobs:
         with:
           name: wheels-musllinux-${{ matrix.platform.target }}
           path: dist
+          retention-days: 5
 
   windows:
     runs-on: ${{ matrix.platform.runner }}
@@ -111,6 +113,7 @@ jobs:
         with:
           name: wheels-windows-${{ matrix.platform.target }}
           path: dist
+          retention-days: 5
 
   macos:
     runs-on: ${{ matrix.platform.runner }}
@@ -137,6 +140,7 @@ jobs:
         with:
           name: wheels-macos-${{ matrix.platform.target }}
           path: dist
+          retention-days: 5
 
   sdist:
     runs-on: ubuntu-latest
@@ -152,6 +156,7 @@ jobs:
         with:
           name: wheels-sdist
           path: dist
+          retention-days: 5
 
   release:
     name: Release
@@ -175,8 +180,6 @@ jobs:
       - name: Publish to PyPI
         if: ${{ startsWith(github.ref, 'refs/tags/') }}
         uses: PyO3/maturin-action@v1
-        env:
-          MATURIN_PYPI_TOKEN: ${{ secrets.PYPI_API_TOKEN }}
         with:
           command: upload
           args: --non-interactive --skip-existing wheels-*/*
