@@ -47,7 +47,7 @@ jobs:
         with:
           target: ${{ matrix.platform.target }}
           args: --release --out dist --find-interpreter
-          sccache: 'true'
+          sccache: 'false'
           before-script-linux: |
             apt install python3-pip
           manylinux: 2_28
