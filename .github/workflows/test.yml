@@ -6,133 +6,126 @@ on:
       - main
   pull_request:
   workflow_dispatch:
-    inputs:
-      publish-tag:
-        type: string
-        required: false
-        description: "Publish a tag"
 
 name: CI
 
 jobs:
-  build_and_test:
-    name: Rust project
+  cross_builds:
+    name: ${{ matrix.target }}
     runs-on: ${{ matrix.os }}
-    container: ${{ matrix.container }}
     strategy:
+      fail-fast: false
       matrix:
-        os: [ ubuntu-latest, macos-latest, windows-latest ]
         include:
-          - os: ubuntu-latest
-            bin: archive-to-parquet
-            name: archive-to-parquet-Linux-x86_64.tar.gz
-            container: quay.io/pypa/manylinux_2_28_x86_64
-          - os: macOS-latest
-            bin: archive-to-parquet
-            name: archive-to-parquet-Darwin-x86_64.tar.gz
-            container: null
-          - os: windows-latest
-            bin: archive-to-parquet.exe
-            name: archive-to-parquet-Windows-x86_64.zip
-            container: null
-    env:
-      RUST_BACKTRACE: "1"
-      SCCACHE_GHA_ENABLED: "true"
-      RUSTC_WRAPPER: "sccache"
-
-      release_profile: "lto"
-
+          - target: aarch64-apple-darwin
+            os: macos-latest
+          - target: x86_64-apple-darwin
+            os: macos-latest
+          - target: x86_64-pc-windows-msvc
+            os: windows-latest
+            archive: zip
+        os: [ 'ubuntu-24.04' ]
+        target:
+          - armv7-linux-androideabi
+          - armv7-unknown-linux-gnueabihf
+          - armv7-unknown-linux-musleabihf
+          - x86_64-unknown-linux-gnu
+          - x86_64-unknown-linux-musl
+          - aarch64-unknown-linux-gnu
+          - aarch64-unknown-linux-musl
     steps:
       - uses: actions/checkout@v4
+
+      - name: Install Rust
+        id: rust
+        uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
-          ref: ${{ inputs.publish-tag || null }}
+          cache: 'false'
+          cache-on-failure: false
+          target: ${{ matrix.target }}
 
-      - name: Run sccache-cache
-        uses: mozilla-actions/sccache-action@v0.0.6
-
-      - uses: actions-rust-lang/setup-rust-toolchain@v1
+      - name: Setup Rust Caching
+        uses: Swatinem/rust-cache@v2
         with:
-          cache-on-failure: 'false'
+          cache-on-failure: false
+          prefix-key: ${{ matrix.target }}
+          key: ${{ steps.rust.outputs.cachekey }}
 
-      - name: Run check
-        run: cargo build --bins
+      - name: Test
+        uses: houseabsolute/actions-rust-cross@v0
+        with:
+          command: test
+          target: ${{ matrix.target }}
+          args: --locked
 
-      - name: Run
-        run: cargo run -- --help
+      - name: Sanity check
+        if: matrix.target == 'x86_64-unknown-linux-gnu' || matrix.target == 'aarch64-apple-darwin' || matrix.target == 'x86_64-pc-windows-msvc'
+        run: cargo run --target ${{ matrix.target }} -- --help
 
       - name: Build release
-        if: startsWith(github.ref, 'refs/tags/') || inputs.publish-tag
-        run: cargo build --profile=${{env.release_profile}}
-      - name: Package
-        if: startsWith(github.ref, 'refs/tags/') || inputs.publish-tag
-        shell: bash
-        run: |
-          strip target/${{env.release_profile}}/${{ matrix.bin }}
-          cd target/${{env.release_profile}}
-          if [[ "${{ matrix.os }}" == "windows-latest" ]]
-          then
-          7z a ../../${{ matrix.name }} ${{ matrix.bin }}
-          else
-          tar czvf ../../${{ matrix.name }} ${{ matrix.bin }}
-          fi
-          cd -
-      - name: Archive binaries
-        uses: actions/upload-artifact@v4
-        if: startsWith(github.ref, 'refs/tags/') || inputs.publish-tag
+        uses: houseabsolute/actions-rust-cross@v0
+        if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch'
         with:
-          name: build-${{ matrix.name }}
-          path: ${{ matrix.name }}
+          command: build
+          target: ${{ matrix.target }}
+          args: --release --locked
+
+      - name: Publish artifacts and release
+        if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch'
+        uses: houseabsolute/actions-rust-release@v0
+        with:
+          executable-name: archive-to-parquet
+          target: ${{ matrix.target }}
 
   create_release:
     name: Release
     runs-on: ubuntu-latest
-    if: startsWith(github.ref, 'refs/tags/') || inputs.publish-tag
+    if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch'
     needs:
-      - build_and_test
-    permissions:
-      contents: write
+      - cross_builds
     steps:
       - name: Checkout sources
         uses: actions/checkout@v4
-        with:
-          ref: ${{ inputs.publish-tag || null }}
       - uses: actions/download-artifact@v4
+        with:
+          merge-multiple: true
       - name: Publish
+        if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: "${{ inputs.publish-tag }}"
           draft: false
           files: |
             **/*.tar.gz
             **/*.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   checks:
     name: Checks
-    runs-on: ubuntu-latest
-    env:
-      RUST_BACKTRACE: "1"
-      SCCACHE_GHA_ENABLED: "true"
-      RUSTC_WRAPPER: "sccache"
+    runs-on: ubuntu-20.04
     steps:
       - name: Checkout sources
         uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
         with:
-          ref: ${{ inputs.publish-tag || null }}
+          python-version: '3.11'
 
-      - name: Run sccache-cache
-        uses: mozilla-actions/sccache-action@v0.0.6
-
-      - uses: actions-rust-lang/setup-rust-toolchain@v1
+      - name: Install stable toolchain
+        uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
-          cache-on-failure: 'false'
+          cache-on-failure: false
+          components: rustfmt,clippy
 
-      - name: Run cargo fmt
-        if: success() || failure()
-        run: cargo fmt --all -- --check
+      - name: Rustfmt Check
+        uses: actions-rust-lang/rustfmt@v1
 
       - name: Run cargo check
         if: success() || failure()
         run: cargo check
 
       - if: success() || failure()
-        run: cargo clippy --all-targets --all-features -- -D warnings
+        run: cargo clippy --all-targets --all-features --locked -- -D warnings
+
+      - if: success() || failure()
+        uses: pre-commit/action@v3.0.1
