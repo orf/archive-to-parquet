@@ -18,13 +18,14 @@ use parquet::arrow::arrow_reader::ParquetRecordBatchReaderBuilder;
 use sha2::{Digest, Sha256};
 use std::io::Write;
 use std::num::NonZeroUsize;
+use std::path::Path;
 use std::sync::Arc;
 use tar::{Builder, Header};
 use tracing::trace;
 use tracing_test::traced_test;
 use zip::write::SimpleFileOptions;
 
-type ArchiveContents<'a> = (ArchiveFormat, &'a str, Vec<(&'a str, Bytes)>);
+type ArchiveContents<'a> = (ArchiveFormat, &'a Path, Vec<(&'a Path, Bytes)>);
 
 fn default_opts() -> ExtractionOptions {
     ExtractionOptions {
@@ -39,21 +40,21 @@ fn default_opts() -> ExtractionOptions {
     }
 }
 
-fn make_zip_file(contents: &[(&str, impl AsRef<[u8]>)]) -> Bytes {
+fn make_zip_file(contents: &[(&Path, impl AsRef<[u8]>)]) -> Bytes {
     let options = SimpleFileOptions::default().compression_method(zip::CompressionMethod::Stored);
     let mut a = zip::write::ZipWriter::new(std::io::Cursor::new(vec![]));
     for (name, data) in contents.iter() {
-        trace!("adding zip file {}", name);
-        a.start_file(name, options).unwrap();
+        trace!("adding zip file {:?}", name);
+        a.start_file(name.to_string_lossy(), options).unwrap();
         a.write_all(data.as_ref()).unwrap();
     }
     Bytes::from(a.finish().unwrap().into_inner())
 }
 
-fn make_tar_file(contents: &[(&str, impl AsRef<[u8]>)]) -> Bytes {
+fn make_tar_file(contents: &[(&Path, impl AsRef<[u8]>)]) -> Bytes {
     let mut a = Builder::new(vec![]);
     for (name, data) in contents.iter() {
-        trace!("adding tar file {}", name);
+        trace!("adding tar file {:?}", name);
         let data = data.as_ref();
         let mut header = Header::new_gnu();
         header.set_size(data.len() as u64);
@@ -160,7 +161,7 @@ fn assert_contents(data: Vec<u8>, contents: Vec<ArchiveContents>) {
     compare_batches(batch, expected_batch)
 }
 
-fn make_batch(name: &str, files: Vec<(&str, Bytes)>, schema: SchemaRef) -> RecordBatch {
+fn make_batch(name: &Path, files: Vec<(&Path, Bytes)>, schema: SchemaRef) -> RecordBatch {
     let mut sources = StringViewBuilder::with_capacity(files.len());
     let mut paths = StringViewBuilder::with_capacity(files.len());
     let mut sizes: PrimitiveBuilder<UInt64Type> = PrimitiveBuilder::with_capacity(files.len());
@@ -168,8 +169,8 @@ fn make_batch(name: &str, files: Vec<(&str, Bytes)>, schema: SchemaRef) -> Recor
     let mut contents = BinaryViewBuilder::with_capacity(files.len());
 
     for (file_name, data) in files.iter() {
-        sources.append_value(name);
-        paths.append_value(file_name);
+        sources.append_value(name.to_string_lossy());
+        paths.append_value(file_name.to_string_lossy());
         sizes.append_value(data.as_ref().len() as u64);
         hashes.append_value(Sha256::digest(data.as_ref())).unwrap();
         contents.append_value(data.as_ref());
@@ -191,14 +192,18 @@ fn b(data: impl AsRef<[u8]>) -> Bytes {
     Bytes::copy_from_slice(data.as_ref())
 }
 
-fn test_simple(format: ArchiveFormat, name: &str) {
-    let archives = vec![(format, name, vec![("hello-world.txt", b("hello world"))])];
+fn p(data: &str) -> &Path {
+    Path::new(data)
+}
+
+fn test_simple(format: ArchiveFormat, name: &Path) {
+    let archives = vec![(format, name, vec![(p("hello-world.txt"), b("hello world"))])];
     let extractor = make_extractor(default_opts(), archives.clone());
     assert_eq!(extractor.input_file_count(), 1);
     let contents = assert_extraction(extractor, 1, 0, 0, 1);
     assert_contents(contents, archives);
 
-    let archives = vec![(format, name, vec![("hello-world.txt", b("hello world"))])];
+    let archives = vec![(format, name, vec![(p("hello-world.txt"), b("hello world"))])];
     let extractor = make_extractor(
         ExtractionOptions {
             min_file_size: 1000u32.into(),
@@ -214,19 +219,19 @@ fn test_simple(format: ArchiveFormat, name: &str) {
 #[test]
 #[traced_test]
 fn test_simple_tar() {
-    test_simple(ArchiveFormat::Tar, "test.tar");
+    test_simple(ArchiveFormat::Tar, p("test.tar"));
 }
 
 #[test]
 #[traced_test]
 fn test_simple_tar_gz() {
-    test_simple(ArchiveFormat::TarGz, "test.tar.gz");
+    test_simple(ArchiveFormat::TarGz, p("test.tar.gz"));
 }
 
 #[test]
 #[traced_test]
 fn test_simple_tar_zip() {
-    test_simple(ArchiveFormat::Zip, "test.zip");
+    test_simple(ArchiveFormat::Zip, p("test.zip"));
 }
 
 #[test]
@@ -234,17 +239,17 @@ fn test_simple_tar_zip() {
 fn test_nested() {
     let inner_contents = vec![
         (
-            "test.zip",
-            make_zip_file(&[("hello-world.txt", b("hello world 1"))]),
+            p("test.zip"),
+            make_zip_file(&[(p("hello-world.txt"), b("hello world 1"))]),
         ),
         (
-            "test.tar",
-            make_tar_file(&[("hello-world.txt", b("hello world 2"))]),
+            p("test.tar"),
+            make_tar_file(&[(p("hello-world.txt"), b("hello world 2"))]),
         ),
     ];
 
     for kind in [ArchiveFormat::Tar, ArchiveFormat::TarGz, ArchiveFormat::Zip] {
-        let archives = vec![(kind, "archive", inner_contents.clone())];
+        let archives = vec![(kind, p("archive"), inner_contents.clone())];
         let extractor = make_extractor(
             ExtractionOptions {
                 max_depth: NonZeroUsize::new(1),
@@ -260,13 +265,13 @@ fn test_nested() {
             vec![
                 (
                     kind,
-                    "archive/test.zip",
-                    vec![("hello-world.txt", b("hello world 1"))],
+                    &p("archive").join("test.zip"),
+                    vec![(p("hello-world.txt"), b("hello world 1"))],
                 ),
                 (
                     kind,
-                    "archive/test.tar",
-                    vec![("hello-world.txt", b("hello world 2"))],
+                    &p("archive").join("test.tar"),
+                    vec![(p("hello-world.txt"), b("hello world 2"))],
                 ),
             ],
         );
@@ -277,8 +282,8 @@ fn test_nested() {
 #[traced_test]
 fn test_removes_duplicates() {
     let contents = vec![
-        ("hello.txt", b("hello world")),
-        ("hello2.txt", b("hello world")),
+        (p("hello.txt"), b("hello world")),
+        (p("hello2.txt"), b("hello world")),
     ];
     let extractor = make_extractor(
         ExtractionOptions {
@@ -286,8 +291,8 @@ fn test_removes_duplicates() {
             ..default_opts()
         },
         vec![
-            (ArchiveFormat::Tar, "test1.tar", contents.clone()),
-            (ArchiveFormat::Tar, "test2.tar", contents.clone()),
+            (ArchiveFormat::Tar, p("test1.tar"), contents.clone()),
+            (ArchiveFormat::Tar, p("test2.tar"), contents.clone()),
         ],
     );
     assert_eq!(extractor.input_file_count(), 2);
@@ -296,8 +301,8 @@ fn test_removes_duplicates() {
         contents,
         vec![(
             ArchiveFormat::Tar,
-            "test1.tar",
-            vec![("hello.txt", b("hello world"))],
+            p("test1.tar"),
+            vec![(p("hello.txt"), b("hello world"))],
         )],
     );
 }

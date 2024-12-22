@@ -2,7 +2,7 @@ use crate::formats::common::add_archive_entry;
 use crate::formats::Counts;
 use crate::{ExtractError, ExtractionOptions, Items, OutputSink};
 use std::io::Read;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use tracing::trace;
 
 pub fn extract<T: OutputSink>(
@@ -23,12 +23,11 @@ pub fn extract<T: OutputSink>(
             counts.skipped();
             continue;
         }
-
-        let path = entry.name().to_string();
+        let path = PathBuf::from(entry.name());
         let size = entry.size();
         trace!(?path, size, "read path");
 
-        counts += add_archive_entry(source, items, options, size, entry, path, &mut buffer)?;
+        counts += add_archive_entry(source, items, options, size, entry, &path, &mut buffer)?;
     }
     Ok(counts)
 }

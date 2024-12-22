@@ -25,15 +25,11 @@ pub fn extract<T: OutputSink>(
             counts.skipped();
             continue;
         };
-        let Some(path) = path.to_str() else {
-            counts.skipped();
-            continue;
-        };
+        let path = path.into_owned();
         let size = entry.header().size()?;
-        let path = path.to_string();
-        trace!(%path, size, ?counts, "read path");
+        trace!(?path, size, ?counts, "read path");
 
-        counts += add_archive_entry(source, items, options, size, entry, path, &mut buffer)?;
+        counts += add_archive_entry(source, items, options, size, entry, &path, &mut buffer)?;
     }
 
     Ok(counts)

@@ -35,11 +35,11 @@ pub fn add_archive_entry<T: OutputSink>(
     options: ExtractionOptions,
     size: u64,
     entry: impl Read,
-    path: String,
+    path: &Path,
     buffer: &mut Vec<u8>,
 ) -> Result<Counts, ExtractError> {
     let Some(data) = fill_buffer(entry, size, options, buffer)? else {
-        trace!("Skipping file {path} due to size limit: {size}");
+        trace!("Skipping file {path:?} due to size limit: {size}");
         return Ok(Counts::new_skipped());
     };
 
@@ -49,7 +49,7 @@ pub fn add_archive_entry<T: OutputSink>(
     );
     if let Some(previous_max_depth) = options.max_depth {
         if let Ok(format) = ArchiveFormat::detect_type(data, options) {
-            trace!(%path, %format, "detected format");
+            trace!(?path, %format, "detected format");
             let new_options = options.decrement_max_depth();
             let path = source.join(path);
             trace!(depth=?new_options.max_depth, old_depth=previous_max_depth, "recursing");
@@ -65,7 +65,7 @@ pub fn add_archive_entry<T: OutputSink>(
                 items.add_text_record(source, path, size, str)?;
             }
             Err(_) => {
-                trace!("Skipping non-text file {path}");
+                trace!("Skipping non-text file {path:?}");
                 return Ok(Counts::new_skipped());
             }
         }

@@ -65,18 +65,18 @@ impl<T: OutputSink> Items<T> {
     pub fn add_record(
         &mut self,
         source: &Path,
-        paths: impl AsRef<str>,
+        paths: &Path,
         size: u64,
         data: &[u8],
     ) -> Result<(), ExtractError> {
-        trace!(?source, paths = paths.as_ref(), size, "add_record");
+        trace!(?source, ?paths, size, "add_record");
         assert!(
             !self.options.only_text,
             "add_record called when only_text is true"
         );
 
         self.sources.append_value(source.to_string_lossy());
-        self.paths.append_value(paths.as_ref());
+        self.paths.append_value(paths.to_string_lossy());
         self.sizes.append_value(size);
         self.data.append_value(data);
         if self.sources.len() >= self.capacity {
@@ -89,18 +89,18 @@ impl<T: OutputSink> Items<T> {
     pub fn add_text_record(
         &mut self,
         source: &Path,
-        paths: impl AsRef<str>,
+        paths: &Path,
         size: u64,
         data: &str,
     ) -> Result<(), ExtractError> {
-        trace!(?source, paths = paths.as_ref(), size, "add_text_record");
+        trace!(?source, ?paths, size, "add_text_record");
         assert!(
             self.options.only_text,
             "add_text_record called when only_text is false"
         );
 
         self.sources.append_value(source.to_string_lossy());
-        self.paths.append_value(paths.as_ref());
+        self.paths.append_value(paths.to_string_lossy());
         self.sizes.append_value(size);
         self.text_data.append_value(data);
         if self.sources.len() >= self.capacity {
