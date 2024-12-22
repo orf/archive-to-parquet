@@ -11,7 +11,7 @@ name = "archive_to_parquet"
 crate-type = ["cdylib", "lib"]
 
 [dependencies]
-anyhow = "1.0.94"
+anyhow = "1.0.95"
 arrow = { version = "53.3.0", default-features = false }
 arrow-select = "53.3.0"
 byte-unit = "5.1.6"
@@ -23,7 +23,7 @@ parquet = "53.3.0"
 rayon = "1.10.0"
 simdutf8 = "0.1.5"
 tar = "0.4.43"
-thiserror = "2.0.6"
+thiserror = "2.0.9"
 tracing = { version = "0.1.40", features = ["release_max_level_debug"] }
 tracing-subscriber = { version = "0.3.19", features = ["env-filter"] }
 zip = "2.2.1"
