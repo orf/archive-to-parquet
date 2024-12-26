@@ -1,6 +1,6 @@
 [tools]
 python = "3.12"
-rust = "latest"
+rust = "stable"
 "cargo:flamegraph" = "latest"
 
 [tasks.test-data-gping]

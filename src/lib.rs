@@ -12,12 +12,13 @@ mod python;
 
 #[cfg(test)]
 mod tests;
+mod output;
 
-pub use extraction::{Extractor, InputContents, OutputSink};
-pub use formats::{ArchiveFormat, Counts};
+pub use extraction::{Extractor};
+pub use formats::{Counts, ArchiveFormat, DetectionError, DetectedFile};
 pub use parquet::basic::Compression as ParquetCompression;
-
-pub(crate) use extraction::*;
+pub use output::*;
+pub use extraction::*;
 
 pub fn default_threads() -> NonZeroUsize {
     std::thread::available_parallelism().unwrap_or(NonZero::new(1).unwrap())
@@ -72,7 +73,7 @@ impl ExtractionOptions {
 impl ExtractionOptions {
     #[inline(always)]
     pub fn check_file_size(&self, size: u64) -> bool {
-        if size < self.min_file_size {
+        if size < self.min_file_size || size == 0 {
             return false;
         }
         if let Some(max_file_size) = self.max_file_size {

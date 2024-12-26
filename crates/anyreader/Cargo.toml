@@ -1,0 +1,36 @@
+[package]
+name = "anyreader"
+version = "0.1.0"
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "Transparently read compressed streams of data, with format detection"
+
+[dependencies]
+peekable = {version = "0.2.4", features = ["smallvec"]}
+zstd = "0.13.2"
+infer = "0.16.0"
+flate2 = { version = "1.0.35", features = ["zlib"], default-features = false }
+liblzma = "0.3.5"
+bzip2 = { version = "0.5.0", features = ["static"] }
+strum = {version = "0.26.3", features = ["derive"]}
+
+tracing = "0.1.41"
+
+tar = { version = "0.4.43", optional = true }
+zip = { version = "2.2.2", optional = true }
+
+[dev-dependencies]
+assert_matches = "1.5.0"
+criterion = { version = "0.5", features = ["html_reports"] }
+rand = "0.8.5"
+
+[features]
+default = []
+test-utils = ["dep:tar", "dep:zip"]
+bench = ["tracing/release_max_level_off"]
+
+[[bench]]
+name = "bench_detection"
+harness = false
+required-features = ["bench"]
