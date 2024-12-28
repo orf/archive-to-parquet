@@ -5,6 +5,7 @@ edition.workspace = true
 license.workspace = true
 repository.workspace = true
 description = "Recursively convert archives to parquet files"
+readme = "../../README.md"
 
 default-run = "archive-to-parquet"
 
