@@ -39,7 +39,7 @@ impl Display for EntryDetails {
 /// This walks a nested tar file
 /// ```
 /// # use std::io::Read;
-/// use std::path::PathBuf;
+/// use std::path::{PathBuf, Path};
 /// # use anyreader::test::{tar_archive, zip_archive};
 /// use anyreader_walker::{FileEntry, AnyWalker, EntryDetails, FormatKind, ArchiveStack};
 /// // Create a tar archive containing a nested tar archive, containing a nested zip archive
@@ -51,7 +51,8 @@ impl Display for EntryDetails {
 ///         ("nested_zip", zip_archive([("nested3", "Hello, nested zip!")]))
 ///     ])),
 /// ]);
-/// let entry = FileEntry::from_bytes("archive.tar.gz", tar_archive).unwrap();
+/// let path = Path::new("archive.tar.gz");
+/// let entry = FileEntry::from_bytes(&path, tar_archive).unwrap();
 ///
 /// #[derive(Default)]
 /// struct Visitor {
@@ -78,12 +79,11 @@ impl Display for EntryDetails {
 /// let mut visitor = Visitor::default();
 /// visitor.walk(entry).unwrap();
 ///
-/// let names = visitor.names.iter().map(|p| p.to_str().unwrap()).collect::<Vec<_>>();
-/// assert_eq!(names, [
-///     "archive.tar.gz/test",
-///     "archive.tar.gz/nested.tar/nested",
-///     "archive.tar.gz/nested.tar/nested2",
-///     "archive.tar.gz/nested.tar/nested_zip/nested3"
+/// assert_eq!(visitor.names, [
+///     path.join("test"),
+///     path.join("nested.tar").join("nested"),
+///     path.join("nested.tar").join("nested2"),
+///     path.join("nested.tar").join("nested_zip").join("nested3"),
 /// ]);
 /// ```
 pub struct FileEntry<T: Read> {

@@ -4,16 +4,16 @@ version = "0.1.0"
 edition.workspace = true
 license.workspace = true
 repository.workspace = true
-description = "Transparently read compressed streams of data, with format detection"
+description = "A library for reading compressed and uncompressed data without knowing the format in advance."
 
 [dependencies]
-peekable = {version = "0.2.4", features = ["smallvec"]}
+peekable = { version = "0.2.4", features = ["smallvec"] }
 zstd = "0.13.2"
 infer = "0.16.0"
 flate2 = { version = "1.0.35", features = ["zlib"], default-features = false }
 liblzma = "0.3.5"
 bzip2 = { version = "0.5.0", features = ["static"] }
-strum = {version = "0.26.3", features = ["derive"]}
+strum = { version = "0.26.3", features = ["derive"] }
 
 tracing = "0.1.41"
 
@@ -24,6 +24,8 @@ zip = { version = "2.2.2", optional = true }
 assert_matches = "1.5.0"
 criterion = { version = "0.5", features = ["html_reports"] }
 rand = "0.8.5"
+tar = "0.4.43"
+zip = "2.2.2"
 
 [features]
 default = []

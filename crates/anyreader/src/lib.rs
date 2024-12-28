@@ -1,5 +1,10 @@
-extern crate core;
+#![allow(clippy::needless_doctest_main)]
+#![doc = include_str!("../README.md")]
 
+///
+/// There are two main types in this library:
+/// - [AnyReader] - a reader that can read compressed and uncompressed data
+/// - [AnyFormat] - a reader with a specific [FormatKind]
 mod compression;
 mod format;
 #[cfg(any(test, feature = "test-utils"))]

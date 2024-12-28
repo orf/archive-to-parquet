@@ -5,15 +5,15 @@ use std::io::{BufReader, Read, Result};
 
 /// A reader that can read from different compression formats
 /// ```
-/// # use anyreader::AnyReader;
-/// # use anyreader::test::gzip_data;
+/// use anyreader::AnyReader;
+///
 /// let mut reader = AnyReader::from_reader(b"hello world".as_slice()).unwrap();
 /// assert!(reader.is_unknown());
 /// assert_eq!(std::io::read_to_string(reader).unwrap(), "hello world");
 ///
-/// let gzip_data = gzip_data(b"hello compressed world");
+/// let gzip_data = zstd::encode_all("hello compressed world".as_bytes(), 1).unwrap();
 /// let mut reader = AnyReader::from_reader(gzip_data.as_slice()).unwrap();
-/// assert!(reader.is_gzip());
+/// assert!(reader.is_zst());
 /// assert_eq!(std::io::read_to_string(reader).unwrap(), "hello compressed world");
 /// ```
 #[derive(strum::EnumIs)]

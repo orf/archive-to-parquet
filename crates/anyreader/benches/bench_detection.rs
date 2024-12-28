@@ -1,5 +1,3 @@
-extern crate core;
-
 use anyreader::test::{bz2_data, gzip_data, tar_archive, xz_data, zip_archive, zstd_data};
 use anyreader::AnyReader;
 use anyreader::{AnyFormat, FormatKind};

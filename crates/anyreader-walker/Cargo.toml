@@ -4,7 +4,7 @@ version = "0.1.0"
 edition.workspace = true
 license.workspace = true
 repository.workspace = true
-description = "Recursively walk archives and compressed files"
+description = "A library for reading streams of compressed and uncompressed data without knowing the format in advance"
 
 [dependencies]
 anyreader = { path = "../anyreader", version = "0.1.0" }
@@ -15,3 +15,4 @@ smallvec = "1.13.2"
 
 [dev-dependencies]
 anyreader = { path = "../anyreader", features = ["test-utils"] }
+zstd = "0.13.2"
