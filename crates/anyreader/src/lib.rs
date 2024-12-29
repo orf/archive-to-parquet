@@ -24,7 +24,6 @@ pub(crate) fn peek_upto<const N: usize>(reader: &mut Peekable<impl Read>) -> Res
 
 #[cfg(test)]
 mod tests {
-
     use super::*;
     use crate::test::{
         assert_data_equal, assert_data_equal_with_msg, bz2_data, gzip_data, read_vec, tar_archive,
@@ -34,6 +33,7 @@ mod tests {
 
     use crate::format::AnyFormat;
     use infer::archive::{is_bz2, is_gz, is_tar, is_xz, is_zip, is_zst};
+
     use std::io::Cursor;
 
     pub const TEST_DATA: &[u8] = b"hello world";
@@ -55,8 +55,9 @@ mod tests {
                 expected
             );
             let res = AnyFormat::from_reader(data.as_slice()).unwrap();
-            assert_eq!(res.kind, *expected);
-            assert_data_equal(TEST_DATA, read_vec(res));
+            let kind = res.kind;
+            assert_eq!(kind, *expected);
+            assert_data_equal_with_msg(TEST_DATA, read_vec(res), format!("Format: {}", kind));
         }
     }
 
@@ -81,18 +82,18 @@ mod tests {
             is_tar(tar_data.as_slice()),
             "Test tar data is not recognized as tar"
         );
-        for data in [
-            tar_data.clone(),
-            gzip_data(&tar_data),
-            zstd_data(&tar_data),
-            bz2_data(&tar_data),
-            xz_data(&tar_data),
+        for (name, data) in [
+            ("tar_data", tar_data.clone()),
+            ("gzip_data", gzip_data(&tar_data)),
+            ("zstd_data", zstd_data(&tar_data)),
+            ("bz2_data", bz2_data(&tar_data)),
+            ("xz_data", xz_data(&tar_data)),
         ] {
             let res = AnyFormat::from_reader(data.as_slice()).unwrap();
             assert_matches!(res.kind, FormatKind::Tar);
             let entries = tar_read_entries(res);
             assert_eq!(entries.len(), 1);
-            assert_data_equal(TEST_DATA, &entries[0]);
+            assert_data_equal_with_msg(TEST_DATA, &entries[0], format!("Format: {}", name));
         }
     }
 
@@ -103,12 +104,12 @@ mod tests {
             is_tar(tar_data.as_slice()),
             "Test tar data is not recognized as tar"
         );
-        for data in [
-            tar_data.clone(),
-            gzip_data(&tar_data),
-            zstd_data(&tar_data),
-            bz2_data(&tar_data),
-            xz_data(&tar_data),
+        for (name, data) in [
+            ("tar_data", tar_data.clone()),
+            ("gzip_data", gzip_data(&tar_data)),
+            ("zstd_data", zstd_data(&tar_data)),
+            ("bz2_data", bz2_data(&tar_data)),
+            ("xz_data", xz_data(&tar_data)),
         ] {
             let res = AnyFormat::from_reader(data.as_slice()).unwrap();
             assert_matches!(res.kind, FormatKind::Tar);
@@ -116,7 +117,7 @@ mod tests {
             assert_eq!(entries.len(), 1);
             let inner_archive = tar_read_entries(&mut entries[0].as_slice());
             assert_eq!(inner_archive.len(), 1);
-            assert_data_equal(TEST_DATA, &inner_archive[0]);
+            assert_data_equal_with_msg(TEST_DATA, &inner_archive[0], format!("Format: {}", name));
         }
     }
 
