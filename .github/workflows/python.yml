@@ -126,7 +126,7 @@ jobs:
 
       - name: Run docker tests
         if: runner.os == 'Linux'
-        run: docker run --rm --platform=${{ matrix.platform }} -v${{ github.workspace }}/:/workspace/ --workdir=/workspace/ python:3.10-slim ./.github/run-python-package-tests
+        run: docker run --rm --platform=${{ matrix.platform }} -v${{ github.workspace }}/:/workspace/ --workdir=/workspace/ debian:latest ./.github/run-python-package-tests
 
       - name: Run tests
         if: runner.os != 'Linux'
