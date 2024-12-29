@@ -1,7 +1,6 @@
 [tools]
 python = "3.12"
 rust = "stable"
-"cargo:flamegraph" = "latest"
 "aqua:cross-rs/cross" = "latest"
 
 [tasks.test-data-gping]
@@ -14,26 +13,6 @@ run = [
     "cat test_data/gping/archive.tar.gz | gzip -d > test_data/gping/archive.tar"
 ]
 outputs = ["test_data/gping/archive.zip", "test_data/gping/archive.tar.gz", "test_data/gping/archive.tar"]
-
-[tasks.test-data-linux]
-description = "Download linux source code"
-run = [
-    "mkdir -p test_data/linux/",
-    "rm -f test_data/linux/*",
-    "wget https://github.com/torvalds/linux/archive/a99b4a369a5495dbb625e1dfb5cd7a5ff6ba4bd5.zip -O test_data/linux/archive.zip",
-    "wget https://github.com/torvalds/linux/archive/a99b4a369a5495dbb625e1dfb5cd7a5ff6ba4bd5.tar.gz -O test_data/linux/archive.tar.gz",
-    "cat test_data/linux/archive.tar.gz | gzip -d > test_data/linux/archive.tar"
-]
-outputs = ["test_data/linux/archive.zip", "test_data/linux/archive.tar.gz", "test_data/linux/archive.tar"]
-
-[tasks.test-data-docker]
-description = "Download images"
-run = [
-    "mkdir -p test_data/python/",
-    "rm -f test_data/python/blobs/**/*",
-    "skopeo copy --all docker://python:latest oci:test_data/python/ --image-parallel-copies=10"
-]
-sources = ["test_data/python/index.json"]
 
 [tasks.test-data-archives]
 description = "Create archives"

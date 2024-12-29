@@ -52,11 +52,19 @@ jobs:
           prefix-key: ${{ matrix.target }}
           key: ${{ steps.rust.outputs.cachekey }}
 
+      - uses: jdx/mise-action@v2
+        with:
+          install: "true"
+          cache: "true"
+
       - name: Install cross
         run: cargo install cross
 
-      - name: Cross build
+      - name: Cross test
         run: cross test --target ${{ matrix.target }} --locked --workspace --all-targets --exclude=py-archive-to-parquet
+
+      - name: Sanity check
+        run: cross run --target ${{ matrix.target }} --locked -- --help
 
 #      - name: Test
 #        uses: houseabsolute/actions-rust-cross@v1
