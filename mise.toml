@@ -4,7 +4,7 @@ rust = "stable"
 pre-commit = "latest"
 uv = "latest"
 "pipx:maturin" = {version = "latest", extras = "zig" }
-"cargo:https://github.com/cross-rs/cross" = { version = "branch:main", crate = "cross" }
+"cargo:https://github.com/cross-rs/cross" = { version = "branch:main", crate = "cross", locked=false }
 
 [tasks.test-data-gping]
 description = "Download gping source code"
