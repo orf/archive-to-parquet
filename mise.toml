@@ -2,6 +2,8 @@
 python = "3.12"
 rust = "stable"
 pre-commit = "latest"
+uv = "latest"
+"pipx:maturin" = "latest"
 "cargo:https://github.com/cross-rs/cross" = { version = "branch:main", crate = "cross" }
 
 [tasks.test-data-gping]
@@ -55,8 +57,14 @@ run = 'pre-commit run --show-diff-on-failure --color=always --all-files'
 
 [tasks.bench]
 description = "Run benchmarks"
-run = 'cross bench --locked --workspace --all-targets --exclude=py-archive-to-parquet -F bench'
+run = 'cross bench --profile=bench-opt --locked --workspace --all-targets --exclude=py-archive-to-parquet -F bench'
 depends = ["test-data-gping"]
+env = { RUSTFLAGS = '-C target_cpu=native' }
+
+[tasks.build-python]
+description = "Build python"
+run = 'cross build --target=aarch64-unknown-linux-gnu'
+env = { RUSTC_WRAPPER = '', RUSTC_WORKSPACE_WRAPPER='' }
 
 #
 #[tasks.bench]
