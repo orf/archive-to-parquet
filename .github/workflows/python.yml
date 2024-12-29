@@ -109,7 +109,7 @@ jobs:
         if: runner.os == 'Linux'
 
       - name: Run docker
-        run: docker run --rm --platform=${{ matrix.platform }} -vwheels/:/wheels/ python:3.10-slim ls /wheels/
+        run: docker run --rm --platform=${{ matrix.platform }} -v${{ github.workspace }}/wheels/:/wheels/ python:3.10-slim pip install archive-to-parquet --find-links=wheels/
         if: runner.os == 'Linux'
 
 #      - name: pytest
