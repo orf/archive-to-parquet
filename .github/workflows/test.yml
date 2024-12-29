@@ -63,13 +63,6 @@ jobs:
         env:
           CROSS_NO_WARNINGS: "0"
 
-#      - name: Test
-#        uses: houseabsolute/actions-rust-cross@v1
-#        with:
-#          command: test
-#          target: ${{ matrix.target }}
-#          args: --locked --workspace --all-targets --exclude=py-archive-to-parquet
-
       - name: Build release
         if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch'
         run: mise x -- cross build --target ${{ matrix.target }} --release --locked
