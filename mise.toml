@@ -23,6 +23,7 @@ env = { CROSS_NO_WARNINGS = "0", RUST_BACKTRACE = "1" }
 [tasks.doctests]
 description = "Run doctests"
 run = 'cross test --locked --doc --workspace --exclude=py-archive-to-parquet'
+env = { CROSS_NO_WARNINGS = "0", RUST_BACKTRACE = "1" }
 
 [tasks.integration-test]
 description = "Run integration test"
@@ -36,8 +37,8 @@ run = 'cross build --locked --profile=release-opt --bin=archive-to-parquet'
 env = { CROSS_NO_WARNINGS = "0", RUST_BACKTRACE = "1" }
 
 [tasks.check]
-description = "Run clippy"
-run = 'cross check'
+description = "Run check"
+run = 'cargo check'
 
 [tasks.clippy]
 description = "Run clippy"
