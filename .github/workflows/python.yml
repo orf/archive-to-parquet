@@ -109,6 +109,12 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: 3.x
+
+      - uses: actions/cache@v4
+        with:
+          path: target/
+          key: ${{ runner.os }}-${{ matrix.platform.target }}-maturin-${{ hashFiles('**/Cargo.lock') }}
+
       - name: Build wheels
         uses: PyO3/maturin-action@v1
         with:
@@ -165,6 +171,12 @@ jobs:
             target: x64
     steps:
       - uses: actions/checkout@v4
+
+      - uses: actions/cache@v4
+        with:
+          path: target/
+          key: ${{ runner.os }}-${{ matrix.platform.target }}-maturin-${{ hashFiles('**/Cargo.lock') }}
+
       - uses: actions/setup-python@v5
         with:
           python-version: 3.x
@@ -208,6 +220,12 @@ jobs:
             target: aarch64
     steps:
       - uses: actions/checkout@v4
+
+      - uses: actions/cache@v4
+        with:
+          path: target/
+          key: ${{ runner.os }}-${{ matrix.platform.target }}-maturin-${{ hashFiles('**/Cargo.lock') }}
+
       - uses: actions/setup-python@v5
         with:
           python-version: 3.x
@@ -240,6 +258,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      - uses: actions/cache@v4
+        with:
+          path: target/
+          key: ${{ runner.os }}-${{ matrix.platform.target }}-maturin-${{ hashFiles('**/Cargo.lock') }}
+
       - name: Build sdist
         uses: PyO3/maturin-action@v1
         with:
