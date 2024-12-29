@@ -10,8 +10,7 @@ mod converter;
 mod io;
 mod wrapper;
 
-// #[cfg(feature = "python")]
-#[pymodule(name = "_archive_to_parquet")]
+#[pymodule(name = "archive_to_parquet")]
 fn setup_module(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<config::PyConvertionOptions>()?;
     m.add_class::<converter::PyConverter>()?;

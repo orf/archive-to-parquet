@@ -74,23 +74,26 @@ archive_formats = [
 def test_compression(tmp_path, data):
     (kind, content, nested_path) = data
 
-    p = tmp_path / "text"
-    p.write_bytes(content)
+    file_path = tmp_path / "text"
+    file_path.write_bytes(content)
+    output_path = tmp_path / "output.parquet"
 
     converter = Converter(ConversionOptions())
-    converter.add_file(p)
+    converter.add_file(file_path)
     assert converter.inputs() == [
-        (kind, str(p), len(content)),
+        (kind, str(file_path), len(content)),
     ]
-    converter.convert(tmp_path / "output.parquet")
-    df = pl.read_parquet(tmp_path / "output.parquet")
+    converter.convert(output_path)
+    df = pl.read_parquet(output_path)
     assert df.rows(named=True) == [{
-        "source": str(p),
-        "path": str(p / nested_path),
+        "source": str(file_path),
+        "path": str(file_path / nested_path),
         "size": len(HELLO_WORLD),
-        "content": HELLO_WORLD,
-        "hash": hashlib.sha256(HELLO_WORLD).digest()
-    }]
+        # list() is required here, as the output seems to be a list of bytes
+        # instead of a bytes object. Not sure why.
+        "content": list(HELLO_WORLD),
+        "hash": list(hashlib.sha256(HELLO_WORLD).digest())
+    }], f'Mismatch for {kind} - file {output_path}'
 
 
 def test_conversion():
