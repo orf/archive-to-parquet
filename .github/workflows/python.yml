@@ -137,7 +137,8 @@ jobs:
           options: -v ${{ github.workspace }}:/io -w /io
           run: |
             set -e
-            apk add uv
+            apk add uv python3
+            echo "Installed" && uv --version
             uv sync
             uv run pytest
       - name: pytest
@@ -148,7 +149,7 @@ jobs:
           distro: alpine_latest
           githubToken: ${{ github.token }}
           install: |
-            apk add uv
+            apk add uv python3
           run: |
             set -e
             uv sync
