@@ -9,6 +9,7 @@ jobs:
       image: ghcr.io/cross-rs/aarch64-unknown-linux-gnu:main
     steps:
       - uses: actions/checkout@v4
+      - run: apt install -y zstd
       - uses: jdx/mise-action@v2
         with:
           install: "true"
