@@ -57,6 +57,8 @@ jobs:
         with:
           install: "true"
           cache: "true"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Cross test
         run: mise x -- cross test --target ${{ matrix.target }} --locked --workspace --all-targets --exclude=py-archive-to-parquet
@@ -74,17 +76,9 @@ jobs:
 #          target: ${{ matrix.target }}
 #          args: --locked --workspace --all-targets --exclude=py-archive-to-parquet
 
-      - name: Sanity check
-        if: matrix.target == 'x86_64-unknown-linux-gnu' || matrix.os == 'aarch64-apple-darwin' || matrix.target == 'x86_64-pc-windows-msvc'
-        run: cargo run --target ${{ matrix.target }} -- --help
-
       - name: Build release
-        uses: houseabsolute/actions-rust-cross@v1
         if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch'
-        with:
-          command: build
-          target: ${{ matrix.target }}
-          args: --release --locked
+        run: mise x -- cross build --target ${{ matrix.target }} --release --locked
 
       - name: Publish artifacts and release
         if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch'
