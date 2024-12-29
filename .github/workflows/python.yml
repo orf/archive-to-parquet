@@ -117,11 +117,6 @@ jobs:
         if: runner.os == 'Linux'
         run: docker run --rm --platform=${{ matrix.platform }} -v${{ github.workspace }}/:/workspace/ --workdir=/workspace/ python:3.10-slim ./.github/run-python-package-tests
 
-      - uses: actions/setup-python@v5
-        if: runner.os != 'Linux'
-        with:
-          python-version: '3.12'
-
       - name: Run tests
         if: runner.os != 'Linux'
         run: ./.github/run-python-package-tests
