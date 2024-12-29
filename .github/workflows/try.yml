@@ -30,4 +30,5 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - run: mise --version
+      - run: mise x -- maturin list-python
       - run: mise x -- maturin build --target=${{matrix.target}} --compatibility=manylinux_2_24
