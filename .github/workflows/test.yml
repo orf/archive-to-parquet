@@ -61,8 +61,11 @@ jobs:
       - name: Cross test
         run: mise x -- cross test --target ${{ matrix.target }} --locked --workspace --all-targets --exclude=py-archive-to-parquet
 
+      - name: Get test data
+        run: mise run test-data-gping
+
       - name: Sanity check
-        run: mise x -- cross run --target ${{ matrix.target }} --locked -- --help
+        run: mise x -- cross run --target ${{ matrix.target }} --locked -- test_data/output.parquet test_data/gping/*
 
 #      - name: Test
 #        uses: houseabsolute/actions-rust-cross@v1

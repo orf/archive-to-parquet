@@ -14,20 +14,6 @@ run = [
 ]
 outputs = ["test_data/gping/archive.zip", "test_data/gping/archive.tar.gz", "test_data/gping/archive.tar"]
 
-[tasks.test-data-archives]
-description = "Create archives"
-run = [
-    "mkdir -p test_data/archives/",
-    "rm -rf test_data/archives/*",
-    # Initial
-    "tar czvf test_data/archives/initial.tar.gz --exclude 'test_data/*' --exclude='target/*' .",
-    "zip -r test_data/archives/initial.zip . -x target/\\* test_data/\\*",
-    # Recursive
-    "tar czvf test_data/archives/recursive.tar.gz test_data/archives/initial*",
-    "zip -r test_data/archives/recursive.zip test_data/archives/initial*",
-]
-outputs = ["test_data/archives/*.zip", "test_data/archives/*.tar.gz"]
-
 [tasks.bench]
 description = "Run benchmarks"
 run = "cargo bench --quiet -F bench"
