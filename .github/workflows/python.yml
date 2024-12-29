@@ -29,7 +29,7 @@ jobs:
         with:
           install: "true"
           cache: "true"
-          cache_key_prefix: 'mise-v0-python-'
+          cache_key_prefix: 'python-mise-v0'
           mise_toml: |
             [tools]
             zig = "latest"
@@ -45,6 +45,13 @@ jobs:
           cache: 'false'
           cache-on-failure: false
           target: ${{ matrix.target }}
+
+      - name: Setup Rust Caching
+        uses: Swatinem/rust-cache@v2
+        with:
+          cache-on-failure: false
+          prefix-key: python-${{ matrix.target }}
+          key: ${{ steps.rust.outputs.cachekey }}
 
       - run: mise --version
       - run: mise x -- maturin list-python

@@ -23,7 +23,7 @@ pub enum AnyReader<T: Read> {
     /// Zstandard compressed data
     Zst(zstd::Decoder<'static, BufReader<Peekable<T>>>),
     /// Bzip2 compressed data
-    Bzip2(bzip2::read::MultiBzDecoder<Peekable<T>>),
+    Bzip2(bzip2::read::BzDecoder<Peekable<T>>),
     /// Xz compressed data
     Xz(liblzma::read::XzDecoder<Peekable<T>>),
     /// Unknown: This is the fallback reader when the format is not recognized, and
@@ -62,7 +62,7 @@ impl<T: Read> AnyReader<T> {
             Ok(Self::Zst(decoder))
         } else if infer::archive::is_bz2(buf) {
             tracing::trace!("bz2 detected");
-            let decoder = bzip2::read::MultiBzDecoder::new(reader);
+            let decoder = bzip2::read::BzDecoder::new(reader);
             Ok(Self::Bzip2(decoder))
         } else if infer::archive::is_xz(buf) {
             tracing::trace!("xz detected");
