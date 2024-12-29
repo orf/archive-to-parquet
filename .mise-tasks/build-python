@@ -9,4 +9,4 @@ target_args=""
 if [ "${usage_target:-}" != "" ]; then
     target_args="--target=${usage_target}"
 fi
-maturin build --compatibility=manylinux_2_24 "${target_args}" --zig --verbose
+maturin build --compatibility=manylinux_2_28 "${target_args}" --zig --verbose
