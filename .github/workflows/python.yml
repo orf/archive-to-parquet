@@ -77,10 +77,38 @@ jobs:
       - name: Upload wheels
         uses: actions/upload-artifact@v4
         with:
-          name: wheels-${{ matrix.platform.target }}
+          name: wheels-${{ matrix.target }}
           path: target/wheels/
           if-no-files-found: error
           retention-days: 1
+
+  test-python:
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: linux/amd64
+            runner: ubuntu-latest
+          - platform: linux/arm64
+            runner: ubuntu-latest
+#          - target: ''
+#            runner: macos-13
+#          - target: ''
+#            runner: macos-14
+          - platform: windows/amd64
+            runner: windows-latest
+          - platform: windows/arm64
+            runner: windows-latest
+    steps:
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Run docker
+        run: docker run --rm --platform=${{ matrix.platform }} python:3.10-slim python --version
 
 #      - name: pytest
 ##        uses: uraimo/run-on-arch-action@v2
