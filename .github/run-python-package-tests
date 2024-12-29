@@ -10,6 +10,8 @@ echo "Installing Rust"
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
 curl -LsSf https://astral.sh/uv/install.sh | sh
 
+source "$HOME"/.local/bin/env
+
 uv sync --no-install-project --dev
 uv pip install archive-to-parquet --find-links=target/wheels/ --verbose --only-binary=true
 uv run --no-sync pytest
