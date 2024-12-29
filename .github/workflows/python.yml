@@ -78,11 +78,13 @@ jobs:
           uv run pytest
       - name: pytest
         if: ${{ !startsWith(matrix.platform.target, 'x86') && matrix.platform.target != 'ppc64' }}
-        uses: uraimo/run-on-arch-action@v2
+#        uses: uraimo/run-on-arch-action@v2
+        uses: orf/run-on-arch-action@support-gha-cache
         with:
           arch: ${{ matrix.platform.target }}
           distro: ubuntu22.04
           githubToken: ${{ github.token }}
+          githubActionsCache: true
           install: |
             apt-get update
             apt-get install -y --no-install-recommends python3 python3-pip
@@ -149,11 +151,13 @@ jobs:
             uv run pytest
       - name: pytest
         if: ${{ !startsWith(matrix.platform.target, 'x86') }}
-        uses: uraimo/run-on-arch-action@v2
+#        uses: uraimo/run-on-arch-action@v2
+        uses: orf/run-on-arch-action@support-gha-cache
         with:
           arch: ${{ matrix.platform.target }}
           distro: alpine_latest
           githubToken: ${{ github.token }}
+          githubActionsCache: true
           install: |
             apk add uv python3
           run: |
