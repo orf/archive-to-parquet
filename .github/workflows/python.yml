@@ -21,25 +21,31 @@ jobs:
           - image: ghcr.io/rust-cross/musllinux_1_2-cross:x86_64
             target: x86_64-unknown-linux-musl
             runner: ubuntu-latest
+            compat: "musllinux_1_2"
           - image: ghcr.io/rust-cross/musllinux_1_2-cross:aarch64
             target: aarch64-unknown-linux-musl
             runner: ubuntu-latest
+            compat: "musllinux_1_2"
 
           # GNU
           - image: ghcr.io/rust-cross/manylinux_2_28-cross:x86_64
             target: x86_64-unknown-linux-gnu
             runner: ubuntu-latest
+            compat: "manylinux_2_28"
           - image: ghcr.io/rust-cross/manylinux_2_28-cross:aarch64
             target: aarch64-unknown-linux-gnu
             runner: ubuntu-latest
+            compat: "manylinux_2_28"
 
           # MacOS
           - image: null
             target: x86_64-apple-darwin
             runner: macos-13
+            compat: ""
           - image: null
             target: aarch64-apple-darwin
             runner: macos-14
+            compat: ""
     container:
       image: ${{ matrix.image }}
     steps:
@@ -77,7 +83,7 @@ jobs:
       - run: mise --version
       - run: mise x -- maturin list-python
 
-      - run: mise run build-python --target=${{matrix.target}}
+      - run: mise run build-python --target=${{matrix.target}} --compat=${{ matrix.compat || 'linux' }}
         shell: bash
 
       - name: Upload wheels
