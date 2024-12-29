@@ -156,7 +156,6 @@ dependencies = [
  "infer",
  "liblzma",
  "peekable",
- "rand",
  "strum",
  "tar",
  "tracing",
