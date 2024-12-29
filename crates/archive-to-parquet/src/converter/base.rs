@@ -1,3 +1,4 @@
+use crate::channel::ConversionCounter;
 use crate::converter::Converter;
 use crate::progress::OutputCounter;
 use crate::{ConvertionOptions, RecordBatchChannel, Visitor};
@@ -45,17 +46,17 @@ impl<T: Read + Send> Converter<T> for StandardConverter<T> {
         self,
         writer: impl Write + Send,
         channel: RecordBatchChannel,
-    ) -> parquet::errors::Result<()> {
+    ) -> parquet::errors::Result<ConversionCounter> {
         let counters: OutputCounter = Default::default();
 
-        rayon::in_place_scope(|scope| -> parquet::errors::Result<()> {
+        rayon::in_place_scope(|scope| {
             for (mut visitor, entry) in self.visitors {
                 scope.spawn(move |_| {
                     visitor.start_walking(entry);
                 });
             }
-            channel.sink_batches(counters, writer, self.options)?;
-            Ok(())
+            let counters = channel.sink_batches(counters, writer, self.options)?;
+            Ok(counters)
         })
     }
 }

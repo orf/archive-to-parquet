@@ -2,7 +2,6 @@
 python = "3.12"
 rust = "stable"
 "cargo:https://github.com/cross-rs/cross" = { version = "branch:main", crate = "cross" }
-"cargo:parquet" = { version = "latest", features = "cli" }
 
 [tasks.test-data-gping]
 description = "Download gping source code"

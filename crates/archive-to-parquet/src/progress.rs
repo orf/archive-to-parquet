@@ -1,8 +1,9 @@
+use crate::channel::ConversionCounter;
 use crate::sink::WriteBatchOutput;
 use arrow::array::RecordBatch;
 use indicatif::style::ProgressTracker;
 use indicatif::{DecimalBytes, HumanCount, ProgressState};
-use std::fmt::{Display, Formatter, Write};
+use std::fmt::Write;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Arc;
 use std::time::Instant;
@@ -70,34 +71,29 @@ struct OutputCounterInner {
     batches_pending: AtomicU64,
 }
 
-impl Display for OutputCounterInner {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(
-            f,
-            "batches={} ({} pending), entries: in={} out={} bytes: in={} out={}",
-            HumanCount(self.total_batches.load(Ordering::Acquire)),
-            HumanCount(self.batches_pending.load(Ordering::Acquire)),
-            HumanCount(self.total_entries.load(Ordering::Acquire)),
-            HumanCount(self.output_rows.load(Ordering::Acquire)),
-            DecimalBytes(self.total_entries_bytes.load(Ordering::Acquire)),
-            DecimalBytes(self.output_bytes.load(Ordering::Acquire))
-        )
-    }
-}
-
 #[derive(Clone, Debug, Default, derive_new::new)]
 pub struct OutputCounter {
     #[new(into)]
     counters: Arc<OutputCounterInner>,
 }
 
-impl Display for OutputCounter {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        self.counters.fmt(f)
+impl From<OutputCounter> for ConversionCounter {
+    fn from(val: OutputCounter) -> Self {
+        val.as_conversion_counter(Ordering::SeqCst)
     }
 }
 
 impl OutputCounter {
+    pub fn as_conversion_counter(&self, ordering: Ordering) -> ConversionCounter {
+        ConversionCounter {
+            total_batches: self.counters.total_batches.load(ordering),
+            total_entries: self.counters.total_entries.load(ordering),
+            total_entries_bytes: self.counters.total_entries_bytes.load(ordering),
+            output_rows: self.counters.output_rows.load(ordering),
+            output_bytes: self.counters.output_bytes.load(ordering),
+        }
+    }
+
     pub fn batch_received(&self, batch: &RecordBatch) {
         self.counters.total_batches.fetch_add(1, Ordering::Relaxed);
         self.counters
@@ -130,6 +126,8 @@ impl ProgressTracker for OutputCounter {
     fn reset(&mut self, _state: &ProgressState, _now: Instant) {}
 
     fn write(&self, _state: &ProgressState, w: &mut dyn std::fmt::Write) {
-        write!(w, "{}", self).unwrap();
+        let pending_batches = self.counters.batches_pending.load(Ordering::Acquire);
+        let counter = self.as_conversion_counter(Ordering::Relaxed);
+        write!(w, "{counter} ({pending_batches} pending)").unwrap();
     }
 }

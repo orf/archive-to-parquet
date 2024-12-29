@@ -2,8 +2,8 @@ use crate::progress::OutputCounter;
 use crate::{new_parquet_writer, ConvertionOptions, ParquetSink};
 use arrow::record_batch::RecordBatch;
 use crossbeam_channel::{Receiver, Sender};
-use indicatif::{DecimalBytes, HumanDuration};
-use std::fmt::{Debug, Formatter};
+use indicatif::{DecimalBytes, HumanCount, HumanDuration};
+use std::fmt::{Debug, Display, Formatter};
 use std::io::Write;
 use tracing::{error, info};
 
@@ -25,6 +25,29 @@ impl Debug for RecordBatchResult {
     }
 }
 
+#[derive(Debug)]
+pub struct ConversionCounter {
+    pub total_batches: u64,
+    pub total_entries: u64,
+    pub total_entries_bytes: u64,
+    pub output_rows: u64,
+    pub output_bytes: u64,
+}
+
+impl Display for ConversionCounter {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "entries: in={} out={} bytes: in={} out={}, batches={}",
+            HumanCount(self.total_entries),
+            HumanCount(self.output_rows),
+            DecimalBytes(self.total_entries_bytes),
+            DecimalBytes(self.output_bytes),
+            HumanCount(self.total_batches),
+        )
+    }
+}
+
 #[derive(Debug, derive_new::new)]
 pub struct RecordBatchChannel {
     pub(crate) sender: RecordBatchSender,
@@ -41,7 +64,7 @@ impl RecordBatchChannel {
         counters: OutputCounter,
         writer: impl Write + Send,
         options: ConvertionOptions,
-    ) -> parquet::errors::Result<()> {
+    ) -> parquet::errors::Result<ConversionCounter> {
         let start = std::time::Instant::now();
         let mut writer = new_parquet_writer(writer, options.compression)?;
         let mut sink = ParquetSink::new(&mut writer, options);
@@ -76,12 +99,13 @@ impl RecordBatchChannel {
             .map(|rg| rg.total_compressed_size.unwrap_or_default())
             .sum();
         let duration = start.elapsed();
+        let conversion_counter: ConversionCounter = counters.into();
         info!(
-            "File written in {}. size={}, {counters}",
+            "File written in {}. size={}, {conversion_counter}",
             HumanDuration(duration),
             DecimalBytes(total_output_bytes as u64),
         );
-        Ok(())
+        Ok(conversion_counter)
     }
 }
 

@@ -13,7 +13,7 @@ mod sink;
 mod visitor;
 
 pub use anyreader_walker::{AnyWalker, ArchiveStack, EntryDetails, FileEntry, FormatKind};
-pub use channel::{new_record_batch_channel, RecordBatchChannel};
+pub use channel::{new_record_batch_channel, ConversionCounter, RecordBatchChannel};
 pub use converter::{Converter, ProgressBarConverter, StandardConverter};
 pub use sink::{new_parquet_writer, IncludeType, ParquetSink};
 pub use visitor::*;

@@ -1,7 +1,7 @@
 mod base;
 mod progress;
 
-use crate::channel::RecordBatchChannel;
+use crate::channel::{ConversionCounter, RecordBatchChannel};
 use crate::{ConvertionOptions, Visitor};
 use anyreader_walker::{EntryDetails, FormatKind};
 pub use base::StandardConverter;
@@ -60,5 +60,5 @@ pub trait Converter<T: Read + Send>: Sized {
         self,
         writer: impl Write + Send,
         channel: RecordBatchChannel,
-    ) -> parquet::errors::Result<()>;
+    ) -> parquet::errors::Result<ConversionCounter>;
 }

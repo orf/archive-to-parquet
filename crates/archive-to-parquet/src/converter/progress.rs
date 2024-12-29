@@ -1,3 +1,4 @@
+use crate::channel::ConversionCounter;
 use crate::progress::{Counters, OutputCounter};
 use crate::{Converter, ConvertionOptions, RecordBatchChannel, StandardConverter, Visitor};
 use anyreader_walker::{EntryDetails, FormatKind};
@@ -51,7 +52,7 @@ impl<T: Read + Send> Converter<T> for ProgressBarConverter<T> {
         self,
         writer: impl Write + Send,
         channel: RecordBatchChannel,
-    ) -> parquet::errors::Result<()> {
+    ) -> parquet::errors::Result<ConversionCounter> {
         let counters: OutputCounter = Default::default();
         let progress_bar = self.progress.insert(
             0,
@@ -66,7 +67,7 @@ impl<T: Read + Send> Converter<T> for ProgressBarConverter<T> {
         progress_bar.enable_steady_tick(Duration::from_millis(250));
         let writer = progress_bar.wrap_write(writer);
 
-        rayon::in_place_scope(|scope| -> parquet::errors::Result<()> {
+        rayon::in_place_scope(|scope| {
             for (mut visitor, entry) in self.converter.visitors {
                 let progress = &self.progress;
                 scope.spawn(move |_| {
@@ -74,8 +75,8 @@ impl<T: Read + Send> Converter<T> for ProgressBarConverter<T> {
                     visitor.start_walking(entry);
                 });
             }
-            channel.sink_batches(counters, writer, self.converter.options)?;
-            Ok(())
+            let counter = channel.sink_batches(counters, writer, self.converter.options)?;
+            Ok(counter)
         })
     }
 }

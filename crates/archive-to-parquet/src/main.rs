@@ -1,3 +1,4 @@
+use anyhow::bail;
 use archive_to_parquet::Converter;
 use archive_to_parquet::{
     new_record_batch_channel, ConvertionOptions, IncludeType, ProgressBarConverter,
@@ -10,7 +11,7 @@ use std::fs::File;
 use std::io::{stderr, Stderr, Write};
 use std::num::NonZeroUsize;
 use std::path::PathBuf;
-use tracing::{info, Level};
+use tracing::{error, info, Level};
 use tracing_subscriber::fmt::MakeWriter;
 use tracing_subscriber::{fmt, layer::SubscriberExt, util::SubscriberInitExt, EnvFilter};
 
@@ -64,7 +65,7 @@ struct Args {
     batch_size: Byte,
 }
 
-fn main() -> std::io::Result<()> {
+fn main() -> anyhow::Result<()> {
     let args = Args::parse();
     let options = ConvertionOptions::new(
         args.include,
@@ -86,7 +87,11 @@ fn main() -> std::io::Result<()> {
 
     let output_file = File::create(args.output)?;
     converter.add_paths(args.paths, &channel)?;
-    converter.convert(output_file, channel)?;
+    let counts = converter.convert(output_file, channel)?;
+    if counts.output_rows == 0 {
+        error!("No rows written to output file. Raw stats: {counts:#?}");
+        bail!("No rows written to output file");
+    }
 
     Ok(())
 }
