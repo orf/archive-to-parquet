@@ -29,6 +29,9 @@ jobs:
           - image: null
             target: aarch64-apple-darwin
             runner: macos-14
+          - image: null
+            target: x86_64-pc-windows-msvc
+            runner: windows-latest
     container:
       image: ${{ matrix.image }}
     steps:
