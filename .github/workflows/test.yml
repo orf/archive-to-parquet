@@ -44,11 +44,20 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Install Rust
+        id: rust
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          cache: 'false'
+          cache-on-failure: false
+          target: ${{ matrix.target }}
+
       - name: Setup Rust Caching
         uses: Swatinem/rust-cache@v2
         with:
           cache-on-failure: false
           prefix-key: ${{ matrix.target }}
+          key: ${{ steps.rust.outputs.cachekey }}
 
       - name: Cross test
         run: mise x -- cross test --target ${{ matrix.target }} --locked --workspace --all-targets --exclude=py-archive-to-parquet
