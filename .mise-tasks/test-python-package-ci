@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 set -e
 
+echo "Working directory: $(pwd)"
 uv sync --no-install-project --dev
 ls -la target/weels/
 uv pip install archive-to-parquet --find-links=target/wheels/ --verbose --only-binary=true
