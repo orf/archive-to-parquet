@@ -33,7 +33,7 @@ jobs:
             target: x86_64-pc-windows-msvc
             runner: windows-latest
           - image: null
-            target: x86_64-pc-windows-msvc
+            target: aarch64-pc-windows-msvc
             runner: windows-latest
     container:
       image: ${{ matrix.image }}
