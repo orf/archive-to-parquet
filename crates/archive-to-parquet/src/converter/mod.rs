@@ -8,7 +8,7 @@ pub use base::StandardConverter;
 pub use progress::ProgressBarConverter;
 use std::fs::File;
 use std::io::{BufReader, Read, Write};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 pub trait Converter<T: Read + Send>: Sized {
     fn new(options: ConvertionOptions) -> Self;
@@ -19,7 +19,7 @@ pub trait Converter<T: Read + Send>: Sized {
 
     fn add_paths(
         &mut self,
-        paths: impl IntoIterator<Item = PathBuf>,
+        paths: impl IntoIterator<Item = impl AsRef<Path>>,
         channel: &RecordBatchChannel,
     ) -> std::io::Result<()>
     where
@@ -36,14 +36,14 @@ pub trait Converter<T: Read + Send>: Sized {
 
     fn add_readers(
         &mut self,
-        readers: impl IntoIterator<Item = (PathBuf, u64, T)>,
+        readers: impl IntoIterator<Item = (impl AsRef<Path>, u64, T)>,
         channel: &RecordBatchChannel,
     ) -> std::io::Result<()> {
         let batch_size = self.options().batch_size;
 
         for (path, size, reader) in readers.into_iter() {
-            let visitor = Visitor::new(path.clone(), channel.sender.clone(), batch_size);
-            self.add_visitor(visitor, path, size, reader)?
+            let visitor = Visitor::new(path.as_ref(), channel.sender.clone(), batch_size);
+            self.add_visitor(visitor, path.as_ref().to_path_buf(), size, reader)?
         }
         Ok(())
     }

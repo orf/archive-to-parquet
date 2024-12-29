@@ -17,9 +17,13 @@ pub struct Visitor {
 }
 
 impl Visitor {
-    pub(crate) fn new(path: PathBuf, channel: RecordBatchSender, batch_size: Byte) -> Self {
+    pub(crate) fn new(
+        path: impl Into<PathBuf>,
+        channel: RecordBatchSender,
+        batch_size: Byte,
+    ) -> Self {
         Self {
-            input_path: path,
+            input_path: path.into(),
             channel,
             batch: OutputBatch::new_with_target_size(batch_size),
             stack: ArchiveStack::default(),

@@ -1,4 +1,4 @@
-use anyhow::bail;
+use anyhow::{bail, Context};
 use archive_to_parquet::Converter;
 use archive_to_parquet::{
     new_record_batch_channel, ConvertionOptions, IncludeType, ProgressBarConverter,
@@ -80,14 +80,21 @@ fn main() -> anyhow::Result<()> {
     let channel = new_record_batch_channel(options.batch_count);
 
     let mut converter = ProgressBarConverter::new(options);
-    setup_tracing(converter.progress().clone());
+    setup_tracing(converter.progress().clone())?;
 
     info!("Converting {} files to Parquet", args.paths.len());
     info!("Options: {}", converter.options());
 
-    let output_file = File::create(args.output)?;
-    converter.add_paths(args.paths, &channel)?;
-    let counts = converter.convert(output_file, channel)?;
+    let output_file =
+        File::create(&args.output).with_context(|| format!("Creating file {:?}", args.output))?;
+    for path in args.paths {
+        converter
+            .add_paths([&path], &channel)
+            .with_context(|| format!("Adding path {path:?}"))?;
+    }
+    let counts = converter
+        .convert(output_file, channel)
+        .context("Converting")?;
     if counts.output_rows == 0 {
         error!("No rows written to output file. Raw stats: {counts:#?}");
         bail!("No rows written to output file");
@@ -96,11 +103,11 @@ fn main() -> anyhow::Result<()> {
     Ok(())
 }
 
-fn setup_tracing(progress: MultiProgress) {
+fn setup_tracing(progress: MultiProgress) -> anyhow::Result<()> {
     let env_filter = EnvFilter::builder()
         .with_default_directive(Level::INFO.into())
         .from_env()
-        .unwrap();
+        .context("Setting up tracing environment filter")?;
     tracing_subscriber::registry()
         .with(
             fmt::layer()
@@ -110,6 +117,7 @@ fn setup_tracing(progress: MultiProgress) {
         )
         .with(env_filter)
         .init();
+    Ok(())
 }
 
 // Utils for making tracing and indicatif work together
