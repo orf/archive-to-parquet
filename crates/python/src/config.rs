@@ -3,6 +3,7 @@ use archive_to_parquet::{Compression, ConvertionOptions, IncludeType};
 use byte_unit::Byte;
 use pyo3::prelude::*;
 use std::fmt::{Display, Formatter};
+use std::num::NonZeroUsize;
 
 #[pyclass(
     str,
@@ -13,6 +14,7 @@ use std::fmt::{Display, Formatter};
 )]
 #[derive(Clone)]
 pub struct PyConvertionOptions {
+    pub threads: NonZeroUsize,
     pub include: PyStringWrapper<IncludeType>,
     pub unique: bool,
     pub compression: PyStringWrapper<Compression>,
@@ -25,6 +27,7 @@ pub struct PyConvertionOptions {
 impl From<ConvertionOptions> for PyConvertionOptions {
     fn from(value: ConvertionOptions) -> Self {
         Self {
+            threads: value.threads,
             include: PyStringWrapper::new(value.include),
             unique: value.unique,
             compression: PyStringWrapper::new(value.compression),
@@ -45,6 +48,7 @@ impl From<PyConvertionOptions> for ConvertionOptions {
 impl From<&PyConvertionOptions> for ConvertionOptions {
     fn from(val: &PyConvertionOptions) -> Self {
         ConvertionOptions {
+            threads: val.threads,
             include: val.include.inner,
             unique: val.unique,
             compression: val.compression.inner,

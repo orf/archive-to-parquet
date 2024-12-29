@@ -68,6 +68,7 @@ struct Args {
 fn main() -> anyhow::Result<()> {
     let args = Args::parse();
     let options = ConvertionOptions::new(
+        args.threads,
         args.include,
         args.unique,
         args.compression,

@@ -49,7 +49,11 @@ impl<T: Read + Send> Converter<T> for StandardConverter<T> {
     ) -> parquet::errors::Result<ConversionCounter> {
         let counters: OutputCounter = Default::default();
 
-        rayon::in_place_scope(|scope| {
+        let pool = rayon::ThreadPoolBuilder::new()
+            .num_threads(self.options.threads.into())
+            .build()
+            .unwrap();
+        pool.in_place_scope(|scope| {
             for (mut visitor, entry) in self.visitors {
                 scope.spawn(move |_| {
                     visitor.start_walking(entry);

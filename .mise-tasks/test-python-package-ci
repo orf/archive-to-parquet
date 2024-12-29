@@ -2,5 +2,6 @@
 set -e
 
 uv sync --no-install-project --dev
-uv pip install archive-to-parquet --find-links=target/wheels/
+ls -la target/weels/
+uv pip install archive-to-parquet --find-links=target/wheels/ --verbose --only-binary=true
 uv run --no-sync pytest

@@ -3,6 +3,7 @@ use byte_unit::{Byte, Unit};
 use indicatif::DecimalBytes;
 pub use parquet::basic::Compression;
 use std::fmt::Display;
+use std::num::NonZeroUsize;
 
 mod batch;
 mod channel;
@@ -18,8 +19,10 @@ pub use converter::{Converter, ProgressBarConverter, StandardConverter};
 pub use sink::{new_parquet_writer, IncludeType, ParquetSink};
 pub use visitor::*;
 
+#[allow(clippy::too_many_arguments)]
 #[derive(Debug, derive_new::new)]
 pub struct ConvertionOptions {
+    pub threads: NonZeroUsize,
     pub include: IncludeType,
     pub unique: bool,
     pub compression: Compression,
@@ -32,6 +35,7 @@ pub struct ConvertionOptions {
 impl ConvertionOptions {
     pub const fn const_default() -> Self {
         Self {
+            threads: NonZeroUsize::new(8).unwrap(),
             include: IncludeType::All,
             unique: false,
             compression: Compression::SNAPPY,
@@ -48,8 +52,8 @@ impl Display for ConvertionOptions {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
-            "ConvertionOptions(include={:?}, unique={}, compression={:?}",
-            self.include, self.unique, self.compression
+            "ConvertionOptions(threads={}, include={:?}, unique={}, compression={:?}",
+            self.threads, self.include, self.unique, self.compression
         )?;
         if let Some(min_size) = &self.min_size {
             write!(f, ", min_size={}", DecimalBytes(min_size.as_u64()))?;

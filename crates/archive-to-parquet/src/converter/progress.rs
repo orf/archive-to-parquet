@@ -67,7 +67,11 @@ impl<T: Read + Send> Converter<T> for ProgressBarConverter<T> {
         progress_bar.enable_steady_tick(Duration::from_millis(250));
         let writer = progress_bar.wrap_write(writer);
 
-        rayon::in_place_scope(|scope| {
+        let pool = rayon::ThreadPoolBuilder::new()
+            .num_threads(self.options().threads.into())
+            .build()
+            .unwrap();
+        pool.in_place_scope(|scope| {
             for (mut visitor, entry) in self.converter.visitors {
                 let progress = &self.progress;
                 scope.spawn(move |_| {
