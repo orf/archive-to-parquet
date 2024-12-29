@@ -132,8 +132,7 @@ jobs:
           options: -v ${{ github.workspace }}:/io -w /io
           run: |
             set -e
-            apk add py3-pip py3-virtualenv
-            pip install -U uv
+            apk add uv
             uv sync
             uv run pytest
       - name: pytest
@@ -144,10 +143,9 @@ jobs:
           distro: alpine_latest
           githubToken: ${{ github.token }}
           install: |
-            apk add py3-virtualenv
+            apk add uv
           run: |
             set -e
-            pip install -U uv
             uv sync
             uv run pytest
 
