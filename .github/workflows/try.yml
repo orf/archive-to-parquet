@@ -19,7 +19,7 @@ jobs:
       - run: apt install -y zstd
       - uses: jdx/mise-action@v2
         with:
-          install: "false"
+          install: "true"
           cache: "true"
           cache_key_prefix: 'mise-v0-python-'
           mise_toml: |
