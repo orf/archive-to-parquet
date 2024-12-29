@@ -57,7 +57,7 @@ jobs:
         with:
           command: test
           target: ${{ matrix.target }}
-          args: --locked
+          args: --locked --workspace --exclude=archive-to-parquet-py --all-targets
 
       - name: Sanity check
         if: matrix.target == 'x86_64-unknown-linux-gnu' || matrix.target == 'aarch64-apple-darwin' || matrix.target == 'x86_64-pc-windows-msvc'
@@ -120,6 +120,10 @@ jobs:
 
       - name: Rustfmt Check
         uses: actions-rust-lang/rustfmt@v1
+
+      - name: Run doctests
+        if: success() || failure()
+        run: cargo test --locked --doc --workspace --exclude=archive-to-parquet-py
 
       - name: Run cargo check
         if: success() || failure()
