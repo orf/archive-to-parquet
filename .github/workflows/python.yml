@@ -150,7 +150,6 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-
       - name: pytest
         if: ${{ startsWith(matrix.platform.target, 'x86_64') }}
         uses: addnab/docker-run-action@v3

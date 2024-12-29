@@ -2,6 +2,7 @@
 python = "3.12"
 rust = "stable"
 "cargo:flamegraph" = "latest"
+"aqua:cross-rs/cross" = "latest"
 
 [tasks.test-data-gping]
 description = "Download gping source code"
