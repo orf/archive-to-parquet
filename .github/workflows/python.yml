@@ -135,8 +135,8 @@ jobs:
         run: |
           set -e
           docker run --rm --platform=${{ matrix.platform }} -v${{ github.workspace }}/:/workspace/ \
-            --workdir=/workspace/ debian:latest \
-            bash -c "apt update && apt install curl -y && ./.github/run-python-package-tests"
+            --workdir=/workspace/ python:3.11 \
+            bash -c "./.github/run-python-package-tests"
 
       - name: Run Docker Alpine tests
         if: runner.os == 'Linux'
@@ -144,7 +144,7 @@ jobs:
           set -e
           docker run --rm --platform=${{ matrix.platform }} -v${{ github.workspace }}/:/workspace/ \
             --workdir=/workspace/ alpine:latest \
-            bash -c "apk update && apk add curl -y && ./.github/run-python-package-tests"
+            bash -c "apk add python3 && ./.github/run-python-package-tests"
 
       - name: Run tests
         if: runner.os != 'Linux'

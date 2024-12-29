@@ -8,11 +8,9 @@ ls -la target/wheels/
 echo "Installing Rust"
 
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
-curl -LsSf https://astral.sh/uv/install.sh | sh
-
 . "$HOME/.cargo/env"
 
-export PATH="$HOME/.local/bin:$PATH"
+pip install -U uv
 
 uv sync --no-install-project --dev
 uv pip install archive-to-parquet --find-links=target/wheels/ --verbose --only-binary=true
