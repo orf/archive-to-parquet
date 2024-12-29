@@ -32,6 +32,7 @@ jobs:
           cache_key_prefix: 'mise-v0-python-'
           mise_toml: |
             [tools]
+            zig = "latest"
             uv = "latest"
             "pipx:maturin" = {version = "latest", extras = "zig" }
         env:
