@@ -78,6 +78,7 @@ jobs:
 
   test-python:
     runs-on: ${{ matrix.runner }}
+    needs: [build-python]
     strategy:
       fail-fast: false
       matrix:
