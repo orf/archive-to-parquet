@@ -63,7 +63,7 @@ env = { RUSTFLAGS = '-C target_cpu=native' }
 
 [tasks.build-python]
 description = "Build python"
-run = 'maturin build '
+run = 'maturin build'
 env = { RUSTC_WRAPPER = '', RUSTC_WORKSPACE_WRAPPER='' }
 
 #
