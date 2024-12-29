@@ -1,3 +1,5 @@
+use bzip2::Compression as Bzip2Compression;
+use flate2::Compression as GZCompression;
 pub use hex::encode as hexencode;
 use std::io::{Read, Write};
 use std::path::PathBuf;
@@ -11,7 +13,7 @@ pub fn read_vec(mut reader: impl Read) -> Vec<u8> {
 }
 
 pub fn gzip_data(data: impl AsRef<[u8]>) -> Vec<u8> {
-    let mut encoder = flate2::write::GzEncoder::new(Vec::new(), flate2::Compression::default());
+    let mut encoder = flate2::write::GzEncoder::new(Vec::new(), GZCompression::new(0));
     encoder.write_all(data.as_ref()).unwrap();
     encoder.finish().unwrap()
 }
@@ -21,13 +23,13 @@ pub fn zstd_data(data: impl AsRef<[u8]>) -> Vec<u8> {
 }
 
 pub fn bz2_data(data: impl AsRef<[u8]>) -> Vec<u8> {
-    let mut encoder = bzip2::write::BzEncoder::new(Vec::new(), Default::default());
+    let mut encoder = bzip2::write::BzEncoder::new(Vec::new(), Bzip2Compression::new(0));
     encoder.write_all(data.as_ref()).unwrap();
     encoder.finish().unwrap()
 }
 
 pub fn xz_data(data: impl AsRef<[u8]>) -> Vec<u8> {
-    let mut encoder = liblzma::write::XzEncoder::new(Vec::new(), Default::default());
+    let mut encoder = liblzma::write::XzEncoder::new(Vec::new(), 0);
     encoder.write_all(data.as_ref()).unwrap();
     encoder.finish().unwrap()
 }
