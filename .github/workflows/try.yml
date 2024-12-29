@@ -19,12 +19,15 @@ jobs:
       - run: apt install -y zstd
       - uses: jdx/mise-action@v2
         with:
-          install: "true"
+          install: "false"
           cache: "true"
           cache_key_prefix: 'mise-v0-python-'
-          install_args: python uv "pipx:maturin"
+          mise_toml: |
+            [tools]
+            uv = "latest"
+            "pipx:maturin" = {version = "latest", extras = "zig" }
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - run: mise --version
-      - run: mise run build-python --target=${{matrix.target}} --compatibility=manylinux_2_24
+      - run: mise x -- maturin build --target=${{matrix.target}} --compatibility=manylinux_2_24
