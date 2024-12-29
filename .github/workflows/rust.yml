@@ -57,7 +57,7 @@ jobs:
         with:
           cache-on-failure: false
           prefix-key: ${{ matrix.target }}
-          key: ${{ steps.rust.outputs.cachekey }}
+          key: ${{ steps.rust.outputs.cachekey }}-${{ github.ref_name }}
 
       - name: Cross test
         run: mise run test --target ${{ matrix.target }}
