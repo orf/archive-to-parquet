@@ -57,7 +57,7 @@ jobs:
         with:
           command: test
           target: ${{ matrix.target }}
-          args: --locked --workspace --exclude=archive-to-parquet-py --all-targets
+          args: --locked --workspace --all-targets --exclude=py-archive-to-parquet
 
       - name: Sanity check
         if: matrix.target == 'x86_64-unknown-linux-gnu' || matrix.os == 'aarch64-apple-darwin' || matrix.target == 'x86_64-pc-windows-msvc'
@@ -123,7 +123,7 @@ jobs:
 
       - name: Run doctests
         if: success() || failure()
-        run: cargo test --locked --doc --workspace --exclude=archive-to-parquet-py
+        run: cargo test --locked --doc --workspace --exclude=py-archive-to-parquet
 
       - name: Run cargo check
         if: success() || failure()
