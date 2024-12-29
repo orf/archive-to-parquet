@@ -6,7 +6,7 @@ rust = "stable"
 [tasks.test-data-gping]
 description = "Download gping source code"
 run = [
-    "mkdir -p test_data/gping/",
+    "mkdir test_data/gping/",
     "rm -f test_data/gping/*",
     "wget https://github.com/orf/gping/archive/e66b02167fa0cb2c5bae957e730d19ac9c22de47.zip -O test_data/gping/archive.zip",
     "wget https://github.com/orf/gping/archive/e66b02167fa0cb2c5bae957e730d19ac9c22de47.tar.gz -O test_data/gping/archive.tar.gz",
