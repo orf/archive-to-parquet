@@ -25,7 +25,7 @@ run = 'cross test --locked --doc --workspace --exclude=py-archive-to-parquet'
 
 [tasks.integration-test]
 description = "Run integration test"
-run = 'cross run --locked -- test_data/output.parquet test_data/gping/*'
+run = 'cross run --locked --target={{option(name="target")}} -- test_data/output.parquet test_data/gping/*'
 depends = ["test-data-gping"]
 env = { CROSS_NO_WARNINGS = "0", RUST_BACKTRACE = "1" }
 
