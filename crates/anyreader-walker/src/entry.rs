@@ -123,7 +123,11 @@ impl<T: Read> FileEntry<T> {
         }
     }
 
-    pub fn from_reader(path: PathBuf, size: u64, reader: T) -> std::io::Result<FileEntry<T>> {
+    pub fn from_reader(
+        path: impl Into<PathBuf>,
+        size: u64,
+        reader: T,
+    ) -> std::io::Result<FileEntry<T>> {
         let inner = AnyFormat::from_reader(reader)?;
         Ok(FileEntry {
             details: EntryDetails::new(path, size),

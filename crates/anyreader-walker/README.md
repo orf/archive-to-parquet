@@ -33,7 +33,7 @@ impl AnyWalker for Visitor {
 
 fn main() {
     let data = make_tar_zst_archive("hello world");
-    let mut entry = FileEntry::from_reader("input.tar.zst", data.len(), data.as_slice()).unwrap();
+    let mut entry = FileEntry::from_reader("input.tar.zst", data.len() as u64, data.as_slice()).unwrap();
     // Or a file:
     // let mut entry = FileEntry::from_path("file.tar.zst").unwrap();
     let mut visitor = Visitor::default();
