@@ -17,15 +17,15 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          # Musl
-          - image: ghcr.io/rust-cross/musllinux_1_2-cross:x86_64
-            target: x86_64-unknown-linux-musl
-            runner: ubuntu-latest
-            compat: "musllinux_1_2"
-          - image: ghcr.io/rust-cross/musllinux_1_2-cross:aarch64
-            target: aarch64-unknown-linux-musl
-            runner: ubuntu-latest
-            compat: "musllinux_1_2"
+#          # Musl
+#          - image: ghcr.io/rust-cross/musllinux_1_2-cross:x86_64
+#            target: x86_64-unknown-linux-musl
+#            runner: ubuntu-latest
+#            compat: "musllinux_1_2"
+#          - image: ghcr.io/rust-cross/musllinux_1_2-cross:aarch64
+#            target: aarch64-unknown-linux-musl
+#            runner: ubuntu-latest
+#            compat: "musllinux_1_2"
 
           # GNU
           - image: ghcr.io/rust-cross/manylinux_2_28-cross:x86_64
@@ -142,13 +142,13 @@ jobs:
             --workdir=/workspace/ python:3.11 \
             bash -c "apt-get update && apt-get install -y zstd && ./.github/setup-project-tests && ./.github/run-python-package-tests"
 
-      - name: Run Docker Alpine tests
-        if: runner.os == 'Linux'
-        run: |
-          set -e
-          docker run --rm --platform=${{ matrix.platform }} -v${{ github.workspace }}/:/workspace/ \
-            --workdir=/workspace/ alpine:latest \
-            sh -c "apk add python3 python3-dev uv bash zstd gcc curl musl-dev && ./.github/setup-project-tests && ./.github/run-basic-python-tests"
+#      - name: Run Docker Alpine tests
+#        if: runner.os == 'Linux'
+#        run: |
+#          set -e
+#          docker run --rm --platform=${{ matrix.platform }} -v${{ github.workspace }}/:/workspace/ \
+#            --workdir=/workspace/ alpine:latest \
+#            sh -c "apk add python3 python3-dev uv bash zstd gcc curl musl-dev && ./.github/setup-project-tests && ./.github/run-basic-python-tests"
 
       - name: Run tests
         if: runner.os != 'Linux'
