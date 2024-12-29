@@ -93,7 +93,7 @@ jobs:
         with:
           merge-multiple: true
       - name: Check artifacts
-        run: ls -la target/wheels/
+        run: ls -la **/*.{tar.gz,zip}
       - name: Generate artifact attestation
         if: ${{ startsWith(github.ref, 'refs/tags/py-archive-to-parquet-') }}
         uses: actions/attest-build-provenance@v2
