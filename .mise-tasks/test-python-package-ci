@@ -2,7 +2,7 @@
 set -e
 
 echo "Working directory: $(pwd)"
-echo "Listing wheels: $(ls -la target/weels/)"
+echo "Listing wheels: $(ls -la target/wheels/)"
 echo "Installing"
 uv sync --no-install-project --dev
 uv pip install archive-to-parquet --find-links=target/wheels/ --verbose --only-binary=true
