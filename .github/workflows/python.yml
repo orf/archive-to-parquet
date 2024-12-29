@@ -55,7 +55,7 @@ jobs:
 
       - run: mise --version
       - run: mise x -- maturin list-python
-      - run: mise run test-python
+      - run: mise run test-python --target=${{matrix.target}}
       - run: mise run build-python --target=${{matrix.target}}
 
 
