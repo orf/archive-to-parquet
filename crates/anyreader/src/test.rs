@@ -13,23 +13,23 @@ pub fn read_vec(mut reader: impl Read) -> Vec<u8> {
 }
 
 pub fn gzip_data(data: impl AsRef<[u8]>) -> Vec<u8> {
-    let mut encoder = flate2::write::GzEncoder::new(Vec::new(), GZCompression::new(0));
+    let mut encoder = flate2::write::GzEncoder::new(Vec::new(), GZCompression::new(1));
     encoder.write_all(data.as_ref()).unwrap();
     encoder.finish().unwrap()
 }
 
 pub fn zstd_data(data: impl AsRef<[u8]>) -> Vec<u8> {
-    zstd::encode_all(data.as_ref(), 0).unwrap()
+    zstd::encode_all(data.as_ref(), 1).unwrap()
 }
 
 pub fn bz2_data(data: impl AsRef<[u8]>) -> Vec<u8> {
-    let mut encoder = bzip2::write::BzEncoder::new(Vec::new(), Bzip2Compression::new(0));
+    let mut encoder = bzip2::write::BzEncoder::new(Vec::new(), Bzip2Compression::new(1));
     encoder.write_all(data.as_ref()).unwrap();
     encoder.finish().unwrap()
 }
 
 pub fn xz_data(data: impl AsRef<[u8]>) -> Vec<u8> {
-    let mut encoder = liblzma::write::XzEncoder::new(Vec::new(), 0);
+    let mut encoder = liblzma::write::XzEncoder::new(Vec::new(), 1);
     encoder.write_all(data.as_ref()).unwrap();
     encoder.finish().unwrap()
 }
