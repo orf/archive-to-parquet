@@ -10,6 +10,7 @@ echo "Installing Rust"
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
 curl -LsSf https://astral.sh/uv/install.sh | sh
 
+. "$HOME/.cargo/env"
 source "$HOME"/.local/bin/env
 
 uv sync --no-install-project --dev
