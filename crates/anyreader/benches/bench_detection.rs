@@ -15,13 +15,6 @@ fn make_compression() -> Vec<(FormatKind, Vec<u8>)> {
 }
 
 fn make_archive() -> Vec<(FormatKind, &'static str, Vec<u8>)> {
-    eprintln!(
-        "manifest: {}",
-        concat!(
-            env!("CARGO_MANIFEST_DIR"),
-            "/../../test_data/gping/archive.zip"
-        )
-    );
     let test_data_zip_archive = std::fs::read(concat!(
         env!("CARGO_MANIFEST_DIR"),
         "/../../test_data/gping/archive.zip"
