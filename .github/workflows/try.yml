@@ -33,4 +33,4 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - run: mise --version
-      - run: mise run build-python --target=${{matrix.target}} --compatibility=manylinux_2_24 --zig
+#      - run: mise run build-python --target=${{matrix.target}} --compatibility=manylinux_2_24 --zig
