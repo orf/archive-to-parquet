@@ -14,31 +14,60 @@ run = [
     "cat test_data/gping/archive.tar.gz | gzip -d > test_data/gping/archive.tar"
 ]
 
-[tasks.cross-build]
-description = "Build cross"
-run = 'echo cross build --target={{option(name="target")}} --locked {{arg()}}'
+[tasks.test]
+description = "Run tests"
+run = 'cross test --locked --workspace --all-targets --exclude=py-archive-to-parquet'
+env = { CROSS_NO_WARNINGS = "0", RUST_BACKTRACE = "1" }
 
-[tasks.bench]
-description = "Run benchmarks"
-run = "cargo bench --quiet -F bench"
-depends = ["test-data-linux", "test-data-gping"]
-env = { RUST_BACKTRACE = '1' }
+[tasks.doctests]
+description = "Run doctests"
+run = 'cross test --locked --doc --workspace --exclude=py-archive-to-parquet'
 
-[tasks.bench-opt]
-description = "Run benchmarks"
-run = "cargo bench --quiet -F bench --profile=bench-opt"
-depends = ["test-data-linux", "test-data-gping"]
-env = { RUSTFLAGS = '-C target_cpu=native', RUST_BACKTRACE = '1' }
+[tasks.integration-test]
+description = "Run integration test"
+run = 'cross run --locked -- test_data/output.parquet test_data/gping/*'
+depends = ["test-data-gping"]
+env = { CROSS_NO_WARNINGS = "0", RUST_BACKTRACE = "1" }
 
-[tasks.flamegraph]
-description = "Generate flamegraph profile"
-run = """
-cargo flamegraph -f bench --root --profile=flamegraph -- \
-    /dev/null test_data/python/blobs/sha256/ --unique --compression=uncompressed
-"""
-depends = ["test-data-docker"]
-env = { RUSTFLAGS = '-C target_cpu=native', RUST_BACKTRACE = '1' }
-
-[tasks.build-release]
+[tasks.release-build]
 description = "Build release"
-run = "cargo build --release --bins"
+run = 'cross build --locked --profile=release-opt --bin=archive-to-parquet'
+env = { CROSS_NO_WARNINGS = "0", RUST_BACKTRACE = "1" }
+
+[tasks.check]
+description = "Run clippy"
+run = 'cross check'
+
+[tasks.clippy]
+description = "Run clippy"
+run = 'cargo clippy --all-targets --all-features --locked -- -D warnings'
+
+[tasks.rustfmt]
+description = "Run rustfmt"
+run = 'cargo fmt --all -- --check'
+
+#
+#[tasks.bench]
+#description = "Run benchmarks"
+#run = "cargo bench --quiet -F bench"
+#depends = ["test-data-linux", "test-data-gping"]
+#env = { RUST_BACKTRACE = '1' }
+#
+#[tasks.bench-opt]
+#description = "Run benchmarks"
+#run = "cargo bench --quiet -F bench --profile=bench-opt"
+#depends = ["test-data-linux", "test-data-gping"]
+#env = { RUSTFLAGS = '-C target_cpu=native', RUST_BACKTRACE = '1' }
+#
+#[tasks.flamegraph]
+#description = "Generate flamegraph profile"
+#run = """
+#cargo flamegraph -f bench --root --profile=flamegraph -- \
+#    /dev/null test_data/python/blobs/sha256/ --unique --compression=uncompressed
+#"""
+#depends = ["test-data-docker"]
+#env = { RUSTFLAGS = '-C target_cpu=native', RUST_BACKTRACE = '1' }
+#
+#[tasks.build-release]
+#description = "Build release"
+#run = "cargo build --release --bins"

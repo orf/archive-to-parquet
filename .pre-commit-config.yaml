@@ -9,11 +9,11 @@ repos:
     hooks:
       - id: rustfmt
         name: rustfmt
-        entry: cargo fmt -- --check
+        entry: mise run rustfmt
         pass_filenames: false
         language: system
       - id: clippy
         name: clippy
-        entry: cargo clippy --all-targets --all-features -- -D warnings
+        entry: mise run clippy
         pass_filenames: false
         language: system

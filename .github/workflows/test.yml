@@ -60,22 +60,17 @@ jobs:
           key: ${{ steps.rust.outputs.cachekey }}
 
       - name: Cross test
-        run: mise x -- cross test --target ${{ matrix.target }} --locked --workspace --all-targets --exclude=py-archive-to-parquet
-        env:
-          CROSS_NO_WARNINGS: "0"
+        run: mise run test --target ${{ matrix.target }}
 
-      - name: Get test data
-        run: mise run test-data-gping
+      - name: Cross doctests
+        run: mise run doctests --target ${{ matrix.target }}
 
-#      - name: Integration test
-#        run: mise x -- cross run --target ${{ matrix.target }} --locked -- test_data/output.parquet test_data/gping/*
-#        env:
-#          CROSS_NO_WARNINGS: "0"
-#          RUST_BACKTRACE: "1"
+      - name: Integration test
+        run: mise run integration-test --target ${{ matrix.target }}
 
       - name: Build release
         if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch'
-        run: mise x -- cross build --target ${{ matrix.target }} --release --locked
+        run: mise run release-build --target ${{ matrix.target }}
 
       - name: Publish artifacts and release
         if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch'
@@ -114,29 +109,22 @@ jobs:
       - name: Checkout sources
         uses: actions/checkout@v4
 
-      - uses: actions/setup-python@v5
+      - uses: jdx/mise-action@v2
         with:
-          python-version: '3.11'
+          install: "true"
+          cache: "true"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Install stable toolchain
+      - name: Install Rust
+        id: rust
         uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
+          cache: 'true'
           cache-on-failure: false
-          components: rustfmt,clippy
-
-      - name: Rustfmt Check
-        uses: actions-rust-lang/rustfmt@v1
-
-      - name: Run doctests
-        if: success() || failure()
-        run: cargo test --locked --doc --workspace --exclude=py-archive-to-parquet
 
       - name: Run cargo check
-        if: success() || failure()
-        run: cargo check
-
-      - if: success() || failure()
-        run: cargo clippy --all-targets --all-features --locked -- -D warnings
+        run: mise run check
 
       - if: success() || failure()
         uses: pre-commit/action@v3.0.1
