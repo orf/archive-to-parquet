@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+set -e
+
+uv sync --no-install-project --dev
+uv pip install archive-to-parquet --find-links=wheels/

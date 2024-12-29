@@ -92,6 +92,8 @@ jobs:
           - target: ''
             runner: macos-14
     steps:
+      - uses: actions/checkout@v4
+
       # Download all artifacts
       - name: Download artifacts
         uses: actions/download-artifact@v4
@@ -109,7 +111,7 @@ jobs:
 
       - name: Run docker tests
         if: runner.os == 'Linux'
-        run: docker run --rm --platform=${{ matrix.platform }} -v${{ github.workspace }}/wheels/:/wheels/ python:3.10-slim pip install archive-to-parquet --find-links=wheels/
+        run: docker run --rm --platform=${{ matrix.platform }} -v${{ github.workspace }}/:/workspace/ --workdir=/workspace/ python:3.10-slim ./mise-tasks/test-python-package-ci
 
       - uses: actions/setup-python@v5
         if: runner.os != 'Linux'
@@ -118,7 +120,7 @@ jobs:
 
       - name: Run tests
         if: runner.os != 'Linux'
-        run: pip install archive-to-parquet --find-links=wheels/
+        run: ./mise-tasks/test-python-package-ci
 
 
 #      - name: pytest
