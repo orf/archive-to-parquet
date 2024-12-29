@@ -16,20 +16,17 @@ jobs:
       image: ${{ matrix.image }}
     steps:
       - uses: actions/checkout@v4
-      - name: Install Rust
-        id: rust
-        uses: actions-rust-lang/setup-rust-toolchain@v1
-        with:
-          cache: 'false'
-          cache-on-failure: false
-          matcher: false
-          target: ${{ matrix.target }}
       - run: apt install -y zstd
       - uses: jdx/mise-action@v2
         with:
           install: "true"
           cache: "true"
+          cache_key_prefix: 'mise-v0-pythons-'
           log_level: "debug"
+          install_args: |
+            python
+            uv
+            "pipx:maturin"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
