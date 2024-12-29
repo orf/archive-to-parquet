@@ -47,6 +47,10 @@ run = 'cargo clippy --all-targets --all-features --locked -- -D warnings'
 description = "Run rustfmt"
 run = 'cargo fmt --all -- --check'
 
+[tasks.pre-commit]
+description = "Run pre-commit"
+run = 'pre-commit run --show-diff-on-failure --color=always --all-files'
+
 #
 #[tasks.bench]
 #description = "Run benchmarks"

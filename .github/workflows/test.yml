@@ -126,5 +126,5 @@ jobs:
       - name: Run cargo check
         run: mise run check
 
-      - if: success() || failure()
-        uses: pre-commit/action@v3.0.1
+      - name: Run pre-commit
+        run: mise run pre-commit
