@@ -37,6 +37,14 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Install Rust
+        id: rust
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          cache: 'false'
+          cache-on-failure: false
+          target: ${{ matrix.target }}
+
       - run: mise --version
       - run: mise x -- maturin list-python
       - run: mise x -- maturin build --target=${{matrix.target}} --compatibility=manylinux_2_24
