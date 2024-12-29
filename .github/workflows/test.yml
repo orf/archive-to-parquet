@@ -57,9 +57,6 @@ jobs:
           install: "true"
           cache: "true"
 
-      - name: Install cross
-        run: cargo install cross
-
       - name: Cross test
         run: cross test --target ${{ matrix.target }} --locked --workspace --all-targets --exclude=py-archive-to-parquet
 
