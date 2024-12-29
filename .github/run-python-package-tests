@@ -11,7 +11,8 @@ curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
 curl -LsSf https://astral.sh/uv/install.sh | sh
 
 . "$HOME/.cargo/env"
-source "$HOME"/.local/bin/env
+
+export PATH="$HOME/.local/bin:$PATH"
 
 uv sync --no-install-project --dev
 uv pip install archive-to-parquet --find-links=target/wheels/ --verbose --only-binary=true
