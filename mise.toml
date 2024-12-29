@@ -3,8 +3,7 @@ python = "3.12"
 rust = "stable"
 pre-commit = "latest"
 uv = "latest"
-zig = "latest"
-"pipx:maturin" = {version = "latest", extras = "zig" }
+"pipx:maturin" = {version = "latest" }
 "cargo:https://github.com/cross-rs/cross" = { version = "branch:main", crate = "cross", locked=false }
 
 [tasks.test-data-gping]
