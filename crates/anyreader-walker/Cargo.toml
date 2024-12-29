@@ -1,13 +1,13 @@
 [package]
 name = "anyreader-walker"
-version = "0.1.0"
+version = "0.1.1"
 edition.workspace = true
 license.workspace = true
 repository.workspace = true
 description = "A library for reading streams of compressed and uncompressed data without knowing the format in advance"
 
 [dependencies]
-anyreader = { path = "../anyreader", version = "0.1.0" }
+anyreader = { path = "../anyreader", version = "0.1.1" }
 tar = "0.4.43"
 zip = "2.2.2"
 bytes = "1.9.0"

@@ -1,6 +1,6 @@
 [package]
 name = "archive-to-parquet"
-version = "0.5.0"
+version = "0.5.1"
 edition.workspace = true
 license.workspace = true
 repository.workspace = true
@@ -10,7 +10,7 @@ readme = "../../README.md"
 default-run = "archive-to-parquet"
 
 [dependencies]
-anyreader-walker = { path = "../anyreader-walker", version = "0.1.0" }
+anyreader-walker = { path = "../anyreader-walker", version = "0.1.1" }
 arrow = { version = "54.0", default-features = false }
 parquet = "54.0"
 clap = { version = "4.5.23", features = ["derive"] }
