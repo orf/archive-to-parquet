@@ -9,9 +9,12 @@ jobs:
       matrix:
         include:
           - image: ghcr.io/rust-cross/manylinux_2_28-cross:x86_64
+            platform: linux/x86_64
           - image: ghcr.io/rust-cross/manylinux_2_28-cross:aarch64
+            platform: linux/aarch64
     container:
       image: ${{ matrix.image }}
+      options: --platform ${{ matrix.platform }}
     steps:
       - uses: actions/checkout@v4
       - run: apt install -y zstd
