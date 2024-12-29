@@ -1,7 +1,7 @@
 [tools]
 python = "3.12"
 rust = "stable"
-"aqua:cross-rs/cross" = "latest"
+"cargo:https://github.com/cross-rs/cross" = { version = "branch:main", crate = "cross" }
 
 [tasks.test-data-gping]
 description = "Download gping source code"
