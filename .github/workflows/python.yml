@@ -39,11 +39,11 @@ jobs:
 
           # MacOS
           - image: null
-            target: x86_64-apple-darwin
-            runner: macos-13
+            target: aarch64-apple-darwin
+            runner: macos-14
             compat: ""
           - image: null
-            target: aarch64-apple-darwin
+            target: x86_64-apple-darwin
             runner: macos-14
             compat: ""
     container:
