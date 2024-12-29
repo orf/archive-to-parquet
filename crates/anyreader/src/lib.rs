@@ -27,8 +27,8 @@ mod tests {
 
     use super::*;
     use crate::test::{
-        assert_data_equal, bz2_data, gzip_data, read_vec, tar_archive, tar_read_entries, xz_data,
-        zip_archive, zstd_data,
+        assert_data_equal, assert_data_equal_with_msg, bz2_data, gzip_data, read_vec, tar_archive,
+        tar_read_entries, xz_data, zip_archive, zstd_data,
     };
     use assert_matches::assert_matches;
 
@@ -164,7 +164,7 @@ mod tests {
                 "expected {format}, got unknown"
             );
             let res = read_vec(res);
-            assert_data_equal(res.as_slice(), expected);
+            assert_data_equal_with_msg(res.as_slice(), expected, format!("Format {format}"));
         }
     }
 }
