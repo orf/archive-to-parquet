@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+#MISE description="Run python tests"
+set -e
+set -x
+
+#USAGE flag "--target <target>" help="The target to build for "
+
+uv sync --reinstall --dev
+uv run pytest
