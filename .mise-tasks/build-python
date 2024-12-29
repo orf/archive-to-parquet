@@ -5,7 +5,7 @@ set -x
 
 #USAGE flag "--target <target>" help="The target to build for "
 #USAGE flag "-p --profile <profile>" help="Build with the specified profile" {
-#USAGE   choices "dev" "release-opt"
+#USAGE   choices "dev" "release"
 #USAGE }
 #USAGE flag "-c --compat <compat>" help="Build with the specified profile" {
 #USAGE   choices "manylinux_2_28" "musllinux_1_2" "linux"

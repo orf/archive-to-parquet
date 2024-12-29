@@ -5,15 +5,11 @@ package.license = "MIT"
 package.edition = "2021"
 package.repository = "https://github.com/orf/archive-to-parquet"
 
-[profile.release-opt]
-inherits = "release"
+[profile.release]
 lto = true
 codegen-units = 1
 incremental = false
 
-[profile.bench-opt]
-inherits = "release-opt"
-
 [profile.flamegraph]
-inherits = "release-opt"
+inherits = "release"
 debug = true

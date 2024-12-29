@@ -83,7 +83,14 @@ jobs:
       - run: mise --version
       - run: mise x -- maturin list-python
 
-      - run: mise run build-python --target=${{matrix.target}} --compat=${{ matrix.compat || 'linux' }}
+      - name: Build dev
+        run: mise run build-python --target=${{matrix.target}} --compat=${{ matrix.compat || 'linux' }} --profile=dev
+        if: ${{ !(startsWith(github.ref, 'refs/tags/py-archive-to-parquet-') || github.event_name == 'workflow_dispatch') }}
+        shell: bash
+
+      - name: Build release
+        run: mise run build-python --target=${{matrix.target}} --compat=${{ matrix.compat || 'linux' }} --profile=release
+        if: ${{ startsWith(github.ref, 'refs/tags/py-archive-to-parquet-') || github.event_name == 'workflow_dispatch' }}
         shell: bash
 
       - run: mise run build-python --target=${{matrix.target}} --compat=${{ matrix.compat || 'linux' }} --sdist
