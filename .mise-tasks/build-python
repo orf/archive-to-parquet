@@ -4,9 +4,12 @@ set -e
 set -x
 
 #USAGE flag "--target <target>" help="The target to build for "
+#USAGE flag "-p --profile <profile>" help="Build with the specified profile" {
+#USAGE   choices "dev" "release-opt"
+#USAGE }
 
 if [ "${usage_target:-}" != "" ]; then
     export CARGO_BUILD_TARGET="${usage_target}"
 fi
 
-maturin build --compatibility=manylinux_2_28
+maturin build --compatibility=manylinux_2_28 --profile="${usage_profile:-dev}"
