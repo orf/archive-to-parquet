@@ -29,12 +29,6 @@ jobs:
           - image: null
             target: aarch64-apple-darwin
             runner: macos-14
-          - image: null
-            target: x86_64-pc-windows-msvc
-            runner: windows-latest
-          - image: null
-            target: aarch64-pc-windows-msvc
-            runner: windows-latest
     container:
       image: ${{ matrix.image }}
     steps:
@@ -92,24 +86,30 @@ jobs:
             runner: ubuntu-latest
           - platform: linux/arm64
             runner: ubuntu-latest
-#          - target: ''
-#            runner: macos-13
-#          - target: ''
-#            runner: macos-14
-          - platform: windows/amd64
-            runner: windows-latest
-          - platform: windows/arm64
-            runner: windows-latest
+          - target: ''
+            runner: macos-13
+          - target: ''
+            runner: macos-14
     steps:
+
+      # Download all artifacts
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          merge-multiple: true
+          path: 'wheels/'
+
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
         if: runner.os == 'Linux'
 
-#      - name: Set up Docker Buildx
-#        uses: docker/setup-buildx-action@v3
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        if: runner.os == 'Linux'
 
       - name: Run docker
-        run: docker run --rm --platform=${{ matrix.platform }} python:3.10-slim python --version
+        run: docker run --rm --platform=${{ matrix.platform }} -vwheels/:/wheels/ python:3.10-slim ls /wheels/
+        if: runner.os == 'Linux'
 
 #      - name: pytest
 ##        uses: uraimo/run-on-arch-action@v2
