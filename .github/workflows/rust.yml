@@ -78,7 +78,7 @@ jobs:
         with:
           executable-name: archive-to-parquet
           target: ${{ matrix.target }}
-          changes-file: ''
+          changes-file: 'CHANGES.md'
           release-tag-prefix: 'archive-to-parquet-v'
 
   create_release:
