@@ -11,7 +11,7 @@ name: CI
 
 concurrency:
   group: rust-${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   cross_builds:
@@ -43,6 +43,7 @@ jobs:
         with:
           cache: 'false'
           cache-on-failure: false
+          components: 'rust-src'
           target: ${{ matrix.target }}
 
       - name: Setup Rust Caching
@@ -58,10 +59,10 @@ jobs:
           cache: "true"
 
       - name: Cross test
-        run: cross test --target ${{ matrix.target }} --locked --workspace --all-targets --exclude=py-archive-to-parquet
+        run: mise x -- cross test --target ${{ matrix.target }} --locked --workspace --all-targets --exclude=py-archive-to-parquet
 
       - name: Sanity check
-        run: cross run --target ${{ matrix.target }} --locked -- --help
+        run: mise x -- cross run --target ${{ matrix.target }} --locked -- --help
 
 #      - name: Test
 #        uses: houseabsolute/actions-rust-cross@v1
