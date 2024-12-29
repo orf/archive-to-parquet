@@ -61,7 +61,7 @@ jobs:
             [tools]
             zig = "latest"
             uv = "latest"
-            "pipx:maturin" = {version = "latest", extras = "zig" }
+            "pipx:maturin" = "latest"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -132,7 +132,7 @@ jobs:
 
       - name: Run docker tests
         if: runner.os == 'Linux'
-        run: docker run --rm --platform=${{ matrix.platform }} -v${{ github.workspace }}/:/workspace/ --workdir=/workspace/ debian:latest ./.github/run-python-package-tests
+        run: docker run --rm --platform=${{ matrix.platform }} -v${{ github.workspace }}/:/workspace/ --workdir=/workspace/ debian:latest bash -c "apt update && apt install curl -y && ./.github/run-python-package-tests"
 
       - name: Run tests
         if: runner.os != 'Linux'
