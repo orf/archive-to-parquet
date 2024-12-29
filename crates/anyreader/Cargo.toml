@@ -19,6 +19,7 @@ tracing = "0.1.41"
 
 tar = { version = "0.4.43", optional = true }
 zip = { version = "2.2.2", optional = true }
+hex = { version = "0.4.3", optional = true }
 
 [dev-dependencies]
 assert_matches = "1.5.0"
@@ -29,7 +30,7 @@ zip = "2.2.2"
 
 [features]
 default = []
-test-utils = ["dep:tar", "dep:zip"]
+test-utils = ["dep:tar", "dep:zip", "dep:hex"]
 bench = ["tracing/release_max_level_off"]
 
 [[bench]]

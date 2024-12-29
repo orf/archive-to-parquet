@@ -24,10 +24,11 @@ pub(crate) fn peek_upto<const N: usize>(reader: &mut Peekable<impl Read>) -> Res
 
 #[cfg(test)]
 mod tests {
+
     use super::*;
     use crate::test::{
-        bz2_data, gzip_data, read_vec, tar_archive, tar_read_entries, xz_data, zip_archive,
-        zstd_data,
+        assert_data_equal, bz2_data, gzip_data, read_vec, tar_archive, tar_read_entries, xz_data,
+        zip_archive, zstd_data,
     };
     use assert_matches::assert_matches;
 
@@ -55,7 +56,7 @@ mod tests {
             );
             let res = AnyFormat::from_reader(data.as_slice()).unwrap();
             assert_eq!(res.kind, *expected);
-            assert_eq!(read_vec(res), TEST_DATA);
+            assert_data_equal(TEST_DATA, read_vec(res));
         }
     }
 
@@ -70,7 +71,7 @@ mod tests {
         assert_matches!(res.kind, FormatKind::Zip);
         let mut archive = zip::ZipArchive::new(Cursor::new(read_vec(res))).unwrap();
         assert_eq!(archive.len(), 1);
-        assert_eq!(read_vec(archive.by_name("test").unwrap()), TEST_DATA);
+        assert_data_equal(TEST_DATA, read_vec(archive.by_name("test").unwrap()));
     }
 
     #[test]
@@ -89,7 +90,9 @@ mod tests {
         ] {
             let res = AnyFormat::from_reader(data.as_slice()).unwrap();
             assert_matches!(res.kind, FormatKind::Tar);
-            assert_eq!(vec![TEST_DATA], tar_read_entries(res))
+            let entries = tar_read_entries(res);
+            assert_eq!(entries.len(), 1);
+            assert_data_equal(TEST_DATA, &entries[0]);
         }
     }
 
@@ -112,7 +115,8 @@ mod tests {
             let entries = tar_read_entries(res);
             assert_eq!(entries.len(), 1);
             let inner_archive = tar_read_entries(&mut entries[0].as_slice());
-            assert_eq!(vec![TEST_DATA], inner_archive)
+            assert_eq!(inner_archive.len(), 1);
+            assert_data_equal(TEST_DATA, &inner_archive[0]);
         }
     }
 
@@ -159,7 +163,8 @@ mod tests {
                 FormatKind::Unknown,
                 "expected {format}, got unknown"
             );
-            assert_eq!(read_vec(res), expected);
+            let res = read_vec(res);
+            assert_data_equal(res.as_slice(), expected);
         }
     }
 }

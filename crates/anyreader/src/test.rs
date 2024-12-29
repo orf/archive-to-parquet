@@ -1,3 +1,4 @@
+pub use hex::encode as hexencode;
 use std::io::{Read, Write};
 use std::path::PathBuf;
 use tar::Header;
@@ -67,4 +68,23 @@ pub fn tar_read_entries(data: impl Read) -> Vec<Vec<u8>> {
         .map(|i| i.map(read_vec))
         .collect::<Result<Vec<_>, _>>()
         .unwrap_or_else(|_| panic!("Error reading tar data: {d:?}"))
+}
+
+pub fn assert_data_equal_with_msg(
+    data: impl AsRef<[u8]>,
+    expected: impl AsRef<[u8]>,
+    msg: impl AsRef<str>,
+) {
+    assert_eq!(
+        data.as_ref(),
+        expected.as_ref(),
+        "Data mismatch:\nleft : {}\nright: {}\nMessage: {}",
+        hexencode(data.as_ref()),
+        hexencode(expected.as_ref()),
+        msg.as_ref()
+    );
+}
+
+pub fn assert_data_equal(data: impl AsRef<[u8]>, expected: impl AsRef<[u8]>) {
+    assert_data_equal_with_msg(data, expected, "No message supplied");
 }

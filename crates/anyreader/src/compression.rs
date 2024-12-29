@@ -105,7 +105,7 @@ fn is_zstd(buffer: &[u8]) -> bool {
 
 #[cfg(test)]
 mod tests {
-    use crate::test::{bz2_data, gzip_data, read_vec, xz_data, zstd_data};
+    use crate::test::{assert_data_equal, bz2_data, gzip_data, read_vec, xz_data, zstd_data};
     use crate::AnyReader;
     pub const TEST_DATA: &[u8] = b"hello world";
 
@@ -122,7 +122,7 @@ mod tests {
         for (data, func) in test_cases {
             let res = AnyReader::from_reader(data.as_slice()).unwrap();
             assert!(func(&res));
-            assert_eq!(read_vec(res), TEST_DATA);
+            assert_data_equal(read_vec(res), TEST_DATA);
         }
     }
 }

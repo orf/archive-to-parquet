@@ -35,7 +35,7 @@ impl<'a, T: Read + 'a> ArchiveVisitor<'a> for TarWalker<T> {
 
 #[cfg(test)]
 mod tests {
-    use crate::tests::{TestVisitor, TEST_DATA};
+    use crate::tests::{assert_visitor_equal, TestVisitor, TEST_DATA};
 
     use crate::entry::FileEntry;
     use crate::walkers::ArchiveVisitor;
@@ -52,14 +52,13 @@ mod tests {
         entry.visit(&mut visitor).unwrap();
 
         let found = visitor.into_data();
-        assert_eq!(found.len(), 1);
-        assert_eq!(
+        assert_visitor_equal(
             found,
             vec![(
                 FormatKind::Unknown,
                 PathBuf::from("test"),
-                TEST_DATA.to_vec()
-            )]
+                TEST_DATA.to_vec(),
+            )],
         )
     }
 
@@ -74,21 +73,20 @@ mod tests {
         entry.visit(&mut visitor).unwrap();
         let found = visitor.into_data();
 
-        assert_eq!(found.len(), 2);
-        assert_eq!(
+        assert_visitor_equal(
             found,
             vec![
                 (
                     FormatKind::Unknown,
                     PathBuf::from("file"),
-                    TEST_DATA.to_vec()
+                    TEST_DATA.to_vec(),
                 ),
                 (
                     FormatKind::Unknown,
                     PathBuf::from("test"),
-                    TEST_DATA.to_vec()
-                )
-            ]
+                    TEST_DATA.to_vec(),
+                ),
+            ],
         )
     }
 }
