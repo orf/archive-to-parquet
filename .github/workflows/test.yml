@@ -91,7 +91,7 @@ jobs:
         with:
           merge-multiple: true
       - name: Publish
-        if: startsWith(github.ref, 'refs/tags/')
+        if: startsWith(github.ref, 'refs/tags/archive-to-parquet-')
         uses: softprops/action-gh-release@v2
         with:
           draft: false

@@ -3,7 +3,7 @@ import tarfile
 import zipfile
 
 import pytest
-from _archive_to_parquet import ConversionOptions, Converter, enable_tracing
+from archive_to_parquet import ConversionOptions, Converter, enable_tracing
 import gzip
 import bz2
 import zstd

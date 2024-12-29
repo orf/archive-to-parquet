@@ -199,18 +199,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "archive-to-parquet-py"
-version = "0.1.0"
-dependencies = [
- "archive-to-parquet",
- "byte-unit",
- "derive-new",
- "pyo3",
- "tracing",
- "tracing-subscriber",
-]
-
-[[package]]
 name = "arrayvec"
 version = "0.7.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1667,6 +1655,18 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn 1.0.109",
+]
+
+[[package]]
+name = "py-archive-to-parquet"
+version = "0.1.0"
+dependencies = [
+ "archive-to-parquet",
+ "byte-unit",
+ "derive-new",
+ "pyo3",
+ "tracing",
+ "tracing-subscriber",
 ]
 
 [[package]]
