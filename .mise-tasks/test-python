@@ -11,5 +11,5 @@ if [ "${usage_target:-}" != "" ]; then
 fi
 
 uv sync --no-install-project --dev
-maturin develop --uv "${target_args}"
+maturin develop --uv "${target_args}" --verbose
 uv run --no-sync pytest
