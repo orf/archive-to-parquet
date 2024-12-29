@@ -27,6 +27,7 @@ env = { CROSS_NO_WARNINGS = "0", RUST_BACKTRACE = "1" }
 
 [tasks.integration-test]
 description = "Run integration test"
+shell = 'bash -c'
 run = 'cross run --locked --target={{option(name="target")}} -- test_data/output.parquet test_data/gping/*'
 depends = ["test-data-gping"]
 env = { CROSS_NO_WARNINGS = "0", RUST_BACKTRACE = "1" }
@@ -51,6 +52,11 @@ run = 'cargo fmt --all -- --check'
 [tasks.pre-commit]
 description = "Run pre-commit"
 run = 'pre-commit run --show-diff-on-failure --color=always --all-files'
+
+[tasks.bench]
+description = "Run benchmarks"
+run = 'cross bench --locked --workspace --all-targets --exclude=py-archive-to-parquet -F bench'
+depends = ["test-data-gping"]
 
 #
 #[tasks.bench]
