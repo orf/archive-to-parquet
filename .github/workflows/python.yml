@@ -68,6 +68,10 @@ jobs:
           name: wheels-linux-${{ matrix.platform.target }}
           path: dist
           retention-days: 5
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
       - name: pytest
         if: ${{ startsWith(matrix.platform.target, 'x86_64') }}
         shell: bash
@@ -83,7 +87,6 @@ jobs:
         with:
           arch: ${{ matrix.platform.target }}
           distro: ubuntu22.04
-          githubToken: ${{ github.token }}
           githubActionsCache: true
           install: |
             apt-get update
@@ -137,6 +140,11 @@ jobs:
           name: wheels-musllinux-${{ matrix.platform.target }}
           path: dist
           retention-days: 5
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+
       - name: pytest
         if: ${{ startsWith(matrix.platform.target, 'x86_64') }}
         uses: addnab/docker-run-action@v3
