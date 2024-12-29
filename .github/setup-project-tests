@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+set -e
+set -x
+
+echo "Working directory: $(pwd)"
+echo "Listing wheels:"
+ls -la target/wheels/
+echo "Installing Rust"
+
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+. "$HOME/.cargo/env"
+
+if ! command -v uv
+then
+    pip install -U uv
+fi
+uv venv

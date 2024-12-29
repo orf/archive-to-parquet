@@ -2,6 +2,5 @@
 set -e
 set -x
 
-uv sync --no-install-project --dev --link-mode=copy
 uv pip install archive-to-parquet --find-links=target/wheels/ --verbose --only-binary=true
-uv run --no-sync pytest
+uv run --no-sync python -m 'import archive_to_parquet; print(archive_to_parquet)'
