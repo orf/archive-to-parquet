@@ -148,7 +148,7 @@ jobs:
           set -e
           docker run --rm --platform=${{ matrix.platform }} -v${{ github.workspace }}/:/workspace/ \
             --workdir=/workspace/ alpine:latest \
-            sh -c "apk add python3 python3-dev uv bash curl && ./.github/setup-project-tests && ./.github/run-basic-python-tests"
+            sh -c "apk add python3 python3-dev uv bash zstd gcc curl musl-dev && ./.github/setup-project-tests && ./.github/run-basic-python-tests"
 
       - name: Run tests
         if: runner.os != 'Linux'
