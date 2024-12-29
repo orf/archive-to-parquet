@@ -1,7 +1,7 @@
 on:
   push:
     tags:
-      - v*
+      - 'archive-to-parquet-*'
     branches:
       - main
   pull_request:
