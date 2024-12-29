@@ -1,4 +1,4 @@
-#![doc = include_str!("../../../README.md")]
+#![doc = include_str!("../README.md")]
 use byte_unit::{Byte, Unit};
 use indicatif::DecimalBytes;
 pub use parquet::basic::Compression;
