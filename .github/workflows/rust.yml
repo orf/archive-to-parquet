@@ -86,6 +86,8 @@ jobs:
     if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch'
     needs:
       - cross_builds
+    permissions:
+      contents: write
     steps:
       - name: Checkout sources
         uses: actions/checkout@v4
