@@ -3,28 +3,46 @@ use anyreader::AnyReader;
 use anyreader::{AnyFormat, FormatKind};
 use criterion::{black_box, criterion_group, criterion_main, Criterion, Throughput};
 
-const TEST_DATA_TAR_ARCHIVE: &[u8] = include_bytes!("../../../test_data/gping/archive.tar");
-const TEST_DATA_ZIP_ARCHIVE: &[u8] = include_bytes!("../../../test_data/gping/archive.zip");
-const TEST_DATA_FILE: &[u8] = include_bytes!("bench_detection.rs");
-
 fn make_compression() -> Vec<(FormatKind, Vec<u8>)> {
+    let test_data_file = include_bytes!("bench_detection.rs");
     vec![
-        (FormatKind::Gzip, gzip_data(TEST_DATA_FILE)),
-        (FormatKind::Zstd, zstd_data(TEST_DATA_FILE)),
-        (FormatKind::Bzip2, bz2_data(TEST_DATA_FILE)),
-        (FormatKind::Xz, xz_data(TEST_DATA_FILE)),
-        (FormatKind::Unknown, TEST_DATA_FILE.to_vec()),
+        (FormatKind::Gzip, gzip_data(test_data_file)),
+        (FormatKind::Zstd, zstd_data(test_data_file)),
+        (FormatKind::Bzip2, bz2_data(test_data_file)),
+        (FormatKind::Xz, xz_data(test_data_file)),
+        (FormatKind::Unknown, test_data_file.to_vec()),
     ]
 }
 
 fn make_archive() -> Vec<(FormatKind, &'static str, Vec<u8>)> {
+    eprintln!(
+        "manifest: {}",
+        concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../test_data/gping/archive.zip"
+        )
+    );
+    let test_data_zip_archive = std::fs::read(concat!(
+        env!("CARGO_MANIFEST_DIR"),
+        "/../../test_data/gping/archive.zip"
+    ))
+    .unwrap();
+    let test_data_tar_archive = std::fs::read(concat!(
+        env!("CARGO_MANIFEST_DIR"),
+        "/../../test_data/gping/archive.tar"
+    ))
+    .unwrap();
     vec![
-        (FormatKind::Zip, "zip", TEST_DATA_ZIP_ARCHIVE.to_vec()),
-        (FormatKind::Tar, "tar", TEST_DATA_TAR_ARCHIVE.to_vec()),
-        (FormatKind::Tar, "tar.gz", gzip_data(TEST_DATA_TAR_ARCHIVE)),
-        (FormatKind::Tar, "tar.zst", zstd_data(TEST_DATA_TAR_ARCHIVE)),
-        (FormatKind::Tar, "tar.bz2", bz2_data(TEST_DATA_TAR_ARCHIVE)),
-        (FormatKind::Tar, "tar.xz", xz_data(TEST_DATA_TAR_ARCHIVE)),
+        (FormatKind::Tar, "tar.gz", gzip_data(&test_data_tar_archive)),
+        (
+            FormatKind::Tar,
+            "tar.zst",
+            zstd_data(&test_data_tar_archive),
+        ),
+        (FormatKind::Tar, "tar.bz2", bz2_data(&test_data_tar_archive)),
+        (FormatKind::Tar, "tar.xz", xz_data(&test_data_tar_archive)),
+        (FormatKind::Zip, "zip", test_data_zip_archive),
+        (FormatKind::Tar, "tar", test_data_tar_archive),
     ]
 }
 
