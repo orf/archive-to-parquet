@@ -148,7 +148,7 @@ jobs:
           set -e
           docker run --rm --platform=${{ matrix.platform }} -v${{ github.workspace }}/:/workspace/ \
             --workdir=/workspace/ alpine:latest \
-            sh -c "apk add python3 bash zstd && ./.github/run-python-package-tests"
+            sh -c "apk add python3 bash zstd curl && ./.github/run-python-package-tests"
 
       - name: Run tests
         if: runner.os != 'Linux'
