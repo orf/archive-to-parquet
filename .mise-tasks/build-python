@@ -5,8 +5,8 @@ set -x
 
 #USAGE flag "--target <target>" help="The target to build for "
 
-target_args=""
 if [ "${usage_target:-}" != "" ]; then
-    target_args="--target=${usage_target}"
+    export CARGO_BUILD_TARGET="${usage_target}"
 fi
-maturin build --compatibility=manylinux_2_28 "${target_args}"
+
+maturin build --compatibility=manylinux_2_28
