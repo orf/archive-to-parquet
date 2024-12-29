@@ -48,6 +48,9 @@ jobs:
           target: ${{ matrix.platform.target }}
           args: --release --out dist
           sccache: 'true'
+          before-script-linux: |
+            (apt-get update && apt-get install python3-pip -y) || true
+            (python3 -m ensurepip || true)
           manylinux: 2_28
       - name: Build free-threaded wheels
         uses: PyO3/maturin-action@v1
@@ -55,6 +58,9 @@ jobs:
           target: ${{ matrix.platform.target }}
           args: --release --out dist -i python3.13t
           sccache: 'true'
+          before-script-linux: |
+            (apt-get update && apt-get install python3-pip -y) || true
+            (python3 -m ensurepip || true)
           manylinux: 2_28
       - name: Upload wheels
         uses: actions/upload-artifact@v4
