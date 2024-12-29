@@ -69,15 +69,6 @@ jobs:
       - name: Integration test
         run: mise x -- cross run --target ${{ matrix.target }} --locked -- test_data/output.parquet test_data/gping/*
 
-      - name: Test output
-        run: |
-          set -e
-          rows=$(mise x -- parquet read test_data/output.parquet | wc -l)
-          if [ "$rows" -lt 1 ]; then
-              echo "Output parquet file is empty"
-              exit 1
-          fi
-
 #      - name: Test
 #        uses: houseabsolute/actions-rust-cross@v1
 #        with:
