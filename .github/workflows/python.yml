@@ -17,12 +17,23 @@ jobs:
       fail-fast: false
       matrix:
         include:
+          # Musl
+          - image: ghcr.io/rust-cross/musllinux_1_2-cross:x86_64
+            target: x86_64-unknown-linux-musl
+            runner: ubuntu-latest
+          - image: ghcr.io/rust-cross/musllinux_1_2-cross:aarch64
+            target: aarch64-unknown-linux-musl
+            runner: ubuntu-latest
+
+          # GNU
           - image: ghcr.io/rust-cross/manylinux_2_28-cross:x86_64
             target: x86_64-unknown-linux-gnu
             runner: ubuntu-latest
           - image: ghcr.io/rust-cross/manylinux_2_28-cross:aarch64
             target: aarch64-unknown-linux-gnu
             runner: ubuntu-latest
+
+          # MacOS
           - image: null
             target: x86_64-apple-darwin
             runner: macos-13
