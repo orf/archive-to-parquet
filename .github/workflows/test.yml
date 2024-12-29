@@ -113,6 +113,8 @@ jobs:
         with:
           install: "true"
           cache: "true"
+          install_args: "pre-commit, rust"
+          cache_key_prefix: "mise-v0-checks"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
