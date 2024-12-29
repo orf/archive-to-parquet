@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+#MISE description="Build the Python library"
+set -e
+set -x
+
+#USAGE flag "--target <target>" help="The target to build for "
+
+target_args=""
+if [ "${usage_target:-}" != "" ]; then
+    target_args="--target=${usage_target}"
+fi
+maturin build --compatibility=manylinux_2_24 "${target_args}" --zig --verbose
