@@ -16,6 +16,13 @@ jobs:
       image: ${{ matrix.image }}
     steps:
       - uses: actions/checkout@v4
+      - run: apt install -y zstd
+      - uses: jdx/mise-action@v2
+        with:
+          install: "true"
+          cache: "true"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Install Rust
         id: rust
         uses: actions-rust-lang/setup-rust-toolchain@v1
@@ -24,12 +31,5 @@ jobs:
           cache-on-failure: false
           target: ${{ matrix.target }}
 
-      - run: apt install -y zstd
-      - uses: jdx/mise-action@v2
-        with:
-          install: "true"
-          cache: "true"
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - run: mise --version
       - run: mise run build-python --target=${{matrix.target}} --compatibility=manylinux_2_24 --zig
