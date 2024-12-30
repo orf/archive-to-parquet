@@ -96,6 +96,8 @@ fn main() -> anyhow::Result<()> {
         args.paths
     };
 
+    let limit = rlimit::increase_nofile_limit((paths.len() * 100) as u64)?;
+    info!("Increased open file limit to {}", limit);
     info!("Converting {} files to Parquet", paths.len());
     info!("Options: {}", converter.options());
 
