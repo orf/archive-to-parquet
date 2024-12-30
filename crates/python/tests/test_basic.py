@@ -87,7 +87,7 @@ def test_compression(tmp_path, data):
     df = pl.read_parquet(output_path)
     assert df.rows(named=True) == [{
         "source": str(file_path),
-        "path": str(file_path / nested_path),
+        "path": nested_path or str(file_path),
         "size": len(HELLO_WORLD),
         # list() is required here, as the output seems to be a list of bytes
         # instead of a bytes object. Not sure why.

@@ -5,11 +5,11 @@ set -x
 
 #USAGE flag "--target <target>" help="The target to build for "
 
-target_args=""
 if [ "${usage_target:-}" != "" ]; then
     target_args="--target=${usage_target}"
 fi
 
 uv sync --no-install-project --dev
-maturin develop --uv "${target_args}" --verbose
-uv run --no-sync pytest
+# shellcheck disable=SC2086
+maturin develop --uv ${target_args:-} --verbose
+uv run --no-sync pytest -vv
