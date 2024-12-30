@@ -41,11 +41,11 @@ env = { CROSS_NO_WARNINGS = "0", RUST_BACKTRACE = "1" }
 
 [tasks.check]
 description = "Run check"
-run = 'cargo check'
+run = 'cargo check --workspace'
 
 [tasks.clippy]
 description = "Run clippy"
-run = 'cargo clippy --all-targets --all-features --locked -- -D warnings'
+run = 'cargo clippy --all-targets --all-features --locked --workspace -- -D warnings'
 
 [tasks.rustfmt]
 description = "Run rustfmt"
