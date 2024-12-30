@@ -1682,7 +1682,7 @@ dependencies = [
 
 [[package]]
 name = "py-archive-to-parquet"
-version = "0.1.2"
+version = "0.1.3"
 dependencies = [
  "archive-to-parquet",
  "byte-unit",
