@@ -20,7 +20,7 @@ pub use sink::{new_parquet_writer, IncludeType, ParquetSink};
 pub use visitor::*;
 
 #[allow(clippy::too_many_arguments)]
-#[derive(Debug, derive_new::new)]
+#[derive(Debug, Clone, derive_new::new)]
 pub struct ConvertionOptions {
     pub threads: NonZeroUsize,
     pub include: IncludeType,
@@ -44,6 +44,16 @@ impl ConvertionOptions {
             batch_count: 14,
             // Also needs changing in the Args struct inside main.rs
             batch_size: Byte::from_u64_with_unit(100, Unit::MB).unwrap(),
+        }
+    }
+
+    #[inline(always)]
+    pub fn get_size_range(&self) -> Option<std::ops::Range<Byte>> {
+        match (self.min_size, self.max_size) {
+            (Some(min), Some(max)) => Some(min..max),
+            (None, Some(max)) => Some(Byte::from(0u64)..max),
+            (Some(min), None) => Some(min..Byte::from(u64::MAX)),
+            (None, None) => None,
         }
     }
 }

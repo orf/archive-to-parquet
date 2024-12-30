@@ -1,11 +1,11 @@
 use crate::batch::OutputBatch;
 use crate::channel::RecordBatchSender;
 use crate::progress::Counters;
+use crate::ConvertionOptions;
 use anyreader_walker::{AnyWalker, ArchiveStack, EntryDetails, FileEntry, FormatKind};
-use byte_unit::Byte;
 use std::io::Read;
 use std::path::PathBuf;
-use tracing::trace;
+use tracing::{debug, error, trace};
 
 #[derive(Debug)]
 pub struct Visitor {
@@ -20,12 +20,12 @@ impl Visitor {
     pub(crate) fn new(
         path: impl Into<PathBuf>,
         channel: RecordBatchSender,
-        batch_size: Byte,
+        options: ConvertionOptions,
     ) -> Self {
         Self {
             input_path: path.into(),
             channel,
-            batch: OutputBatch::new_with_target_size(batch_size),
+            batch: OutputBatch::new_with_options(options),
             stack: ArchiveStack::default(),
             counters: Counters::default(),
         }
@@ -42,8 +42,9 @@ impl Visitor {
             .batch
             .create_record_batch_and_reset()
             .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e))?;
+        trace!("Sending batch with {} rows", batch.num_rows());
         self.counters.sent_batch();
-        self.channel.send_batch(Ok(batch));
+        self.channel.send_batch(Ok(batch))?;
         Ok(())
     }
 
@@ -56,9 +57,10 @@ impl Visitor {
     }
 
     pub fn start_walking(&mut self, entry: FileEntry<impl Read>) {
-        // self.progress.start_progress_bar(multi_progress);
+        debug!("Starting to walk: {}", entry.details());
         if let Err(e) = self.try_walk(entry) {
-            self.channel.send_batch(Err(e));
+            error!("Error while walking {:?}: {}", self.stack.nested_path(), e);
+            self.channel.send_batch(Err(e)).ok(); // Channel disconnected, ignore
         }
     }
 }
@@ -70,9 +72,10 @@ impl AnyWalker for Visitor {
             entry.details(),
             self.stack.nested_path().display()
         );
-        let entry_size =
-            self.batch
-                .add_record(&self.input_path, self.stack.nested_path(), entry)?;
+
+        let entry_size = self
+            .batch
+            .add_record(&self.input_path, self.stack.nested_path(), entry);
 
         self.counters.read_entry(entry_size);
 
@@ -87,8 +90,16 @@ impl AnyWalker for Visitor {
         details: &EntryDetails,
         format: FormatKind,
     ) -> std::io::Result<bool> {
-        let path = self.stack.push_archive(&details.path);
-        trace!("Processing archive: {details} - {format}. Current source: {path:?}");
+        // Detect quine zip files
+        if format.is_zip() && Some(details) == self.stack.last_entry() {
+            debug!(
+                "Skipping archive: quine zip. details: {details}. Current source: {:?}",
+                self.stack.nested_path()
+            );
+            return Ok(false);
+        }
+        let path = self.stack.push_details(details.clone());
+        debug!("Processing archive: {details} - {format}. Current source: {path:?}");
         Ok(true)
     }
 
@@ -99,8 +110,10 @@ impl AnyWalker for Visitor {
     ) -> std::io::Result<()> {
         self.counters.read_archive();
 
-        let finished = self.stack.pop_archive();
-        trace!("Finished processing archive: {}", finished.display());
+        let (current_source, finished_path) = self.stack.pop_details();
+        debug!(
+            "Finished processing archive: {finished_path:?}. Current source: {current_source:?}"
+        );
         Ok(())
     }
 }

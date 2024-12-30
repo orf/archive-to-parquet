@@ -32,7 +32,7 @@ impl ProgressTracker for Counters {
 
     fn write(&self, _state: &ProgressState, w: &mut dyn Write) {
         w.write_fmt(format_args!(
-            "Entries: {}, Entries Bytes: {}, Archives: {}, Batches: {}",
+            "Entries: {} read, {} bytes, Archives: {}, Batches: {}",
             HumanCount(self.counters.entries_read.load(Ordering::Acquire)),
             DecimalBytes(self.counters.entries_read_bytes.load(Ordering::Acquire)),
             HumanCount(self.counters.archives_read.load(Ordering::Acquire)),

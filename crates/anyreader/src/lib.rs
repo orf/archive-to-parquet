@@ -13,13 +13,13 @@ pub mod test;
 pub use crate::compression::AnyReader;
 pub use crate::format::{AnyFormat, FormatKind};
 use peekable::Peekable;
-use std::io::{Read, Result};
+use std::io::Read;
 
 #[inline(always)]
-pub(crate) fn peek_upto<const N: usize>(reader: &mut Peekable<impl Read>) -> Result<&[u8]> {
+pub(crate) fn peek_upto<const N: usize>(reader: &mut Peekable<impl Read>) -> &[u8] {
     let buf = reader.get_ref().0;
     let end = N.min(buf.len());
-    Ok(&buf[..end])
+    &buf[..end]
 }
 
 #[cfg(test)]

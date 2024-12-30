@@ -34,7 +34,6 @@ pub trait AnyWalker: Sized {
             Ok(())
         } else {
             self.visit_file_entry(&mut entry)?;
-            // std::io::copy(&mut entry, &mut std::io::sink())?;
             Ok(())
         }
     }

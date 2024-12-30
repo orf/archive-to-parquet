@@ -58,7 +58,7 @@ impl Display for EntryDetails {
 /// struct Visitor {
 ///    names: Vec<PathBuf>,
 ///    stack: ArchiveStack
-/// };
+/// }
 ///
 /// impl AnyWalker for Visitor {
 ///     fn visit_file_entry(&mut self, entry: &mut FileEntry<impl Read>) -> std::io::Result<()> {
@@ -67,11 +67,11 @@ impl Display for EntryDetails {
 ///     }
 ///
 ///     fn begin_visit_archive(&mut self, details: &EntryDetails, format: FormatKind) -> std::io::Result<bool> {
-///         self.stack.push_archive(&details.path);
+///         self.stack.push_details(details.clone());
 ///         Ok(true)
 ///     }
 ///     fn end_visit_archive(&mut self, details: EntryDetails, format: FormatKind) -> std::io::Result<()> {
-///        self.stack.pop_archive();
+///        self.stack.pop_details();
 ///        Ok(())
 ///    }
 /// }

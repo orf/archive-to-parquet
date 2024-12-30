@@ -45,9 +45,10 @@ impl<T: Read> AnyFormat<T> {
 
         let compression_reader = AnyReader::from_reader(reader)?;
         let format: FormatKind = (&compression_reader).into();
+        trace!(format=%format, "initial format kind detected, attempting refinement");
         let mut reader = Peekable::with_capacity(compression_reader, MAX_PEEK_BUFFER_SIZE);
-        reader.fill_peek_buf()?;
-        let buf = crate::peek_upto::<MAX_PEEK_BUFFER_SIZE>(&mut reader)?;
+        reader.fill_peek_buf().ok();
+        let buf = crate::peek_upto::<MAX_PEEK_BUFFER_SIZE>(&mut reader);
         trace!("peeked {} bytes", buf.len());
 
         let format: FormatKind = if infer::archive::is_tar(buf) {

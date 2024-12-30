@@ -123,15 +123,13 @@ pub(crate) struct RecordBatchSender {
 }
 
 impl RecordBatchSender {
-    pub fn send_batch(&self, result: std::io::Result<RecordBatch>) {
+    pub fn send_batch(&self, result: std::io::Result<RecordBatch>) -> std::io::Result<()> {
         match result {
-            Ok(batch) => {
-                self.inner.send(RecordBatchResult::Batch(batch)).unwrap();
-            }
-            Err(error) => {
-                self.inner.send(RecordBatchResult::Errored(error)).unwrap();
-            }
+            Ok(batch) => self.inner.send(RecordBatchResult::Batch(batch)),
+            Err(error) => self.inner.send(RecordBatchResult::Errored(error)),
         }
+        .map_err(|_| std::io::Error::from(std::io::ErrorKind::ConnectionAborted))?; // Channel disconnected
+        Ok(())
     }
 }
 

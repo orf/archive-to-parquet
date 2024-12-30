@@ -1,3 +1,4 @@
+use crate::EntryDetails;
 use std::path::{Path, PathBuf};
 
 /// A utility struct to keep track of the current archive stack.
@@ -8,18 +9,18 @@ use std::path::{Path, PathBuf};
 /// # Example
 /// ```
 /// # use std::path::Path;
-/// # use anyreader_walker::ArchiveStack;
+/// # use anyreader_walker::{ArchiveStack, EntryDetails};
 /// let mut stack = ArchiveStack::new();
-/// stack.push_archive("first.tar");
-/// stack.push_archive("second.tar");
+/// stack.push_details(EntryDetails::new("first.tar", 5));
+/// stack.push_details(EntryDetails::new("second.tar", 10));
 /// assert_eq!(stack.nested_path(), Path::new("first.tar/second.tar"));
 /// assert_eq!(stack.current_depth(), 2);
-/// stack.pop_archive();
+/// stack.pop_details();
 /// assert_eq!(stack.nested_path(), Path::new("first.tar"));
 /// ```
 #[derive(Debug, Default)]
 pub struct ArchiveStack {
-    stack: smallvec::SmallVec<[PathBuf; 6]>,
+    stack: smallvec::SmallVec<[EntryDetails; 6]>,
     nested_path: PathBuf,
 }
 
@@ -28,17 +29,20 @@ impl ArchiveStack {
         Self::default()
     }
 
-    pub fn push_archive(&mut self, path: impl AsRef<Path>) -> &Path {
-        let path = path.as_ref().to_path_buf();
-        self.nested_path.push(&path);
-        self.stack.push(path);
+    pub fn last_entry(&self) -> Option<&EntryDetails> {
+        self.stack.last()
+    }
+
+    pub fn push_details(&mut self, details: EntryDetails) -> &Path {
+        self.nested_path.push(&details.path);
+        self.stack.push(details);
         &self.nested_path
     }
 
-    pub fn pop_archive(&mut self) -> &Path {
-        self.stack.pop();
-        self.nested_path = PathBuf::from_iter(self.stack.iter());
-        &self.nested_path
+    pub fn pop_details(&mut self) -> (&Path, Option<EntryDetails>) {
+        let finished = self.stack.pop();
+        self.nested_path = PathBuf::from_iter(self.stack.iter().map(|d| &d.path));
+        (&self.nested_path, finished)
     }
 
     pub fn current_depth(&self) -> usize {

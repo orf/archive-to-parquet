@@ -39,10 +39,14 @@ pub trait Converter<T: Read + Send>: Sized {
         readers: impl IntoIterator<Item = (impl AsRef<Path>, u64, T)>,
         channel: &RecordBatchChannel,
     ) -> std::io::Result<()> {
-        let batch_size = self.options().batch_size;
+        // let batch_size = self.options().batch_size;
 
         for (path, size, reader) in readers.into_iter() {
-            let visitor = Visitor::new(path.as_ref(), channel.sender.clone(), batch_size);
+            let visitor = Visitor::new(
+                path.as_ref(),
+                channel.sender.clone(),
+                self.options().clone(),
+            );
             self.add_visitor(visitor, path.as_ref().to_path_buf(), size, reader)?
         }
         Ok(())

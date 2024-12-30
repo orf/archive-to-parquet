@@ -8,7 +8,7 @@ use clap::Parser;
 use indicatif::MultiProgress;
 pub use parquet::basic::Compression as ParquetCompression;
 use std::fs::File;
-use std::io::{stderr, BufRead, Stderr, Write};
+use std::io::{stderr, BufRead, BufWriter, Stderr, Write};
 use std::num::NonZeroUsize;
 use std::path::PathBuf;
 use tracing::{error, info, Level};
@@ -64,10 +64,17 @@ struct Args {
     /// Maximum size of each batch in memory.
     #[clap(long, default_value = "100MB")]
     batch_size: Byte,
-}
 
+    /// Log file to write messages to
+    #[clap(long)]
+    log_file: Option<PathBuf>,
+}
 fn main() -> anyhow::Result<()> {
     let args = Args::parse();
+    do_main(args)?;
+    Ok(())
+}
+fn do_main(args: Args) -> anyhow::Result<()> {
     let options = ConvertionOptions::new(
         args.threads,
         args.include,
@@ -82,7 +89,17 @@ fn main() -> anyhow::Result<()> {
     let channel = new_record_batch_channel(options.batch_count);
 
     let mut converter = ProgressBarConverter::new(options);
-    setup_tracing(converter.progress().clone())?;
+    let (tracing_writer, _guard) = match args.log_file {
+        None => {
+            let writer = TracingProgressWriter::new(converter.progress().clone(), stderr());
+            tracing_appender::non_blocking(writer)
+        }
+        Some(p) => {
+            let file = File::create(&p).with_context(|| format!("Creating log file {:?}", p))?;
+            tracing_appender::non_blocking(BufWriter::new(file))
+        }
+    };
+    setup_tracing(tracing_writer)?;
 
     let paths = if args.paths.len() == 1 && args.paths[0].to_string_lossy() == "-" {
         info!("Reading paths from stdin");
@@ -121,7 +138,7 @@ fn main() -> anyhow::Result<()> {
     Ok(())
 }
 
-fn setup_tracing(progress: MultiProgress) -> anyhow::Result<()> {
+fn setup_tracing(writer: impl Write + Sync + Send + Clone + 'static) -> anyhow::Result<()> {
     let env_filter = EnvFilter::builder()
         .with_default_directive(Level::INFO.into())
         .from_env()
@@ -131,7 +148,8 @@ fn setup_tracing(progress: MultiProgress) -> anyhow::Result<()> {
             fmt::layer()
                 .compact()
                 .with_file(false)
-                .with_writer(TracingProgressWriter::new(progress, stderr())),
+                .with_thread_ids(true)
+                .with_writer(move || writer.clone()),
         )
         .with(env_filter)
         .init();

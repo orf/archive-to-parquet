@@ -3,15 +3,12 @@ use crate::hasher::HASH_SIZE;
 use crate::ConvertionOptions;
 use arrow::array::{Array, AsArray, BooleanArray};
 use arrow::compute::filter_record_batch;
-use arrow::datatypes::UInt64Type;
 use arrow::record_batch::RecordBatch;
-use byte_unit::Byte;
 use parquet::arrow::ArrowWriter;
 use parquet::basic::Compression;
 use parquet::file::properties::{EnabledStatistics, WriterProperties, WriterVersion};
 use std::collections::HashSet;
 use std::io::Write;
-use std::ops::Range;
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq, clap::ValueEnum, strum::EnumString, strum::Display)]
 #[strum(serialize_all = "lowercase", ascii_case_insensitive)]
@@ -63,9 +60,7 @@ pub fn new_parquet_writer<T: Write + Send>(
 
 pub struct ParquetSink<'a, T: Write + Send> {
     writer: &'a mut ArrowWriter<T>,
-    include_type: IncludeType,
     seen_hashes: Option<HashSet<[u8; HASH_SIZE]>>,
-    size_range: Option<Range<Byte>>,
 }
 
 impl<'a, T: Write + Send> ParquetSink<'a, T> {
@@ -75,17 +70,9 @@ impl<'a, T: Write + Send> ParquetSink<'a, T> {
         } else {
             None
         };
-        let size_range = match (options.min_size, options.max_size) {
-            (Some(min), Some(max)) => Some(min..max),
-            (None, Some(max)) => Some(Byte::from(0u64)..max),
-            (Some(min), None) => Some(min..Byte::from(u64::MAX)),
-            (None, None) => None,
-        };
         Self {
             writer,
-            include_type: options.include,
             seen_hashes,
-            size_range,
         }
     }
 
@@ -119,62 +106,12 @@ impl<'a, T: Write + Send> ParquetSink<'a, T> {
         Ok(filter_record_batch(&record_batch, &select_mask)?)
     }
 
-    #[inline(always)]
-    fn is_utf8(v: &[u8]) -> bool {
-        simdutf8::basic::from_utf8(v).is_ok()
-    }
-
-    fn filter_types(
-        include: IncludeType,
-        batch: RecordBatch,
-    ) -> parquet::errors::Result<RecordBatch> {
-        let column = batch.column_by_name("content").unwrap().as_binary::<i64>();
-        assert!(!column.is_nullable(), "Content column is nullable");
-        let filter_array = match include {
-            IncludeType::All => return Ok(batch),
-            IncludeType::Text => BooleanArray::from_iter(
-                column.iter().map(|path| Some(Self::is_utf8(path.unwrap()))),
-            ),
-            IncludeType::Binary => BooleanArray::from_iter(
-                column
-                    .iter()
-                    .map(|path| Some(!Self::is_utf8(path.unwrap()))),
-            ),
-        };
-        Ok(filter_record_batch(&batch, &filter_array)?)
-    }
-
-    fn filter_size(
-        size_range: &Range<Byte>,
-        batch: RecordBatch,
-    ) -> parquet::errors::Result<RecordBatch> {
-        let sizes = batch
-            .column_by_name("size")
-            .unwrap()
-            .as_primitive::<UInt64Type>();
-        assert!(!sizes.is_nullable(), "Size column is nullable");
-        let filter_array = BooleanArray::from_iter(
-            sizes
-                .iter()
-                .map(|size| Some(size_range.contains(&Byte::from(size.unwrap())))),
-        );
-        Ok(filter_record_batch(&batch, &filter_array)?)
-    }
-
     pub fn write_batch(&mut self, batch: RecordBatch) -> parquet::errors::Result<WriteBatchOutput> {
         let batch = match &mut self.seen_hashes {
             None => batch,
             Some(seen_hashes) => Self::deduplicate_batch(batch, seen_hashes)?,
         };
 
-        let batch = match self.include_type {
-            IncludeType::All => batch,
-            _ => Self::filter_types(self.include_type, batch)?,
-        };
-        let batch = match &self.size_range {
-            None => batch,
-            Some(size_range) => Self::filter_size(size_range, batch)?,
-        };
         let output = WriteBatchOutput {
             num_rows: batch.num_rows() as u64,
             bytes: batch.get_array_memory_size() as u64,

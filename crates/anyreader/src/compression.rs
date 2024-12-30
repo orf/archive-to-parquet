@@ -49,8 +49,8 @@ impl<T: Read> AnyReader<T> {
         const MAX_PEEK_BUFFER_SIZE: usize = 6;
 
         let mut reader = Peekable::with_capacity(reader, MAX_PEEK_BUFFER_SIZE);
-        reader.fill_peek_buf()?;
-        let buf = peek_upto::<MAX_PEEK_BUFFER_SIZE>(&mut reader)?;
+        reader.fill_peek_buf().ok();
+        let buf = peek_upto::<MAX_PEEK_BUFFER_SIZE>(&mut reader);
         tracing::trace!("peeked {} bytes", buf.len());
         if infer::archive::is_gz(buf) {
             tracing::trace!("gz detected");

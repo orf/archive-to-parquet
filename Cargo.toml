@@ -32,6 +32,7 @@ indicatif = "0.17.9"
 strum = {version = "0.26.3", features = ["derive"]}
 anyhow = "1.0.95"
 rlimit = "0.10.2"
+tracing-appender = "0.2.3"
 
 [profile.release]
 lto = true
