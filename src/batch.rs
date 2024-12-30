@@ -13,7 +13,7 @@ use byte_unit::Byte;
 use std::fmt::{Display, Formatter};
 use std::io::{Read, Write};
 use std::ops::Range;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::sync::{Arc, LazyLock};
 use tracing::{debug, trace};
 
@@ -98,13 +98,14 @@ impl OutputBatch {
     pub fn add_record(
         &mut self,
         input_path: &Path,
-        source: &Path,
+        mut source: PathBuf,
         entry: &mut FileEntry<impl Read>,
     ) -> u64 {
         trace!(path=?entry.path(), size=?entry.size(), "add_record");
         self.sources.append_value(input_path.to_string_lossy());
-        self.paths
-            .append_value(source.join(entry.path()).to_string_lossy());
+
+        source.push(entry.path());
+        self.paths.append_value(source.to_string_lossy());
         // Copy the data into the buffer, and finish it with appending an empty value.
         let mut hashed_writer = HashedWriter::new(&mut self.content);
         let bytes_written = infallable_copy(entry, &mut hashed_writer);

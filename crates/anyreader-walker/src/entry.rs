@@ -62,7 +62,7 @@ impl Display for EntryDetails {
 ///
 /// impl AnyWalker for Visitor {
 ///     fn visit_file_entry(&mut self, entry: &mut FileEntry<impl Read>) -> std::io::Result<()> {
-///         self.names.push(self.stack.nested_path().join(&entry.path()));
+///         self.names.push(self.stack.full_path().join(&entry.path()));
 ///         Ok(())
 ///     }
 ///

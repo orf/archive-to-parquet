@@ -98,8 +98,11 @@ impl AnyWalker for Visitor {
             );
             return Ok(false);
         }
-        let path = self.stack.push_details(details.clone());
-        debug!("Processing archive: {details} - {format}. Current source: {path:?}");
+        self.stack.push_details(details.clone());
+        debug!(
+            "Processing archive: {details} - {format}. Current source: {:?}",
+            self.stack.nested_path()
+        );
         Ok(true)
     }
 
@@ -110,9 +113,10 @@ impl AnyWalker for Visitor {
     ) -> std::io::Result<()> {
         self.counters.read_archive();
 
-        let (current_source, finished_path) = self.stack.pop_details();
+        let finished = self.stack.pop_details();
         debug!(
-            "Finished processing archive: {finished_path:?}. Current source: {current_source:?}"
+            "Finished processing archive: {finished:?}. Current source: {:?}",
+            self.stack.nested_path()
         );
         Ok(())
     }

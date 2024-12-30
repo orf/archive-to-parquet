@@ -13,15 +13,16 @@ use std::path::{Path, PathBuf};
 /// let mut stack = ArchiveStack::new();
 /// stack.push_details(EntryDetails::new("first.tar", 5));
 /// stack.push_details(EntryDetails::new("second.tar", 10));
-/// assert_eq!(stack.nested_path(), Path::new("first.tar/second.tar"));
-/// assert_eq!(stack.current_depth(), 2);
+/// stack.push_details(EntryDetails::new("third.tar", 7));
+/// assert_eq!(stack.root_path(), Path::new("first.tar"));
+/// assert_eq!(stack.nested_path(), Path::new("second.tar/third.tar"));
+/// assert_eq!(stack.current_depth(), 3);
 /// stack.pop_details();
-/// assert_eq!(stack.nested_path(), Path::new("first.tar"));
+/// assert_eq!(stack.nested_path(), Path::new("second.tar"));
 /// ```
 #[derive(Debug, Default)]
 pub struct ArchiveStack {
     stack: smallvec::SmallVec<[EntryDetails; 6]>,
-    nested_path: PathBuf,
 }
 
 impl ArchiveStack {
@@ -33,16 +34,12 @@ impl ArchiveStack {
         self.stack.last()
     }
 
-    pub fn push_details(&mut self, details: EntryDetails) -> &Path {
-        self.nested_path.push(&details.path);
+    pub fn push_details(&mut self, details: EntryDetails) {
         self.stack.push(details);
-        &self.nested_path
     }
 
-    pub fn pop_details(&mut self) -> (&Path, Option<EntryDetails>) {
-        let finished = self.stack.pop();
-        self.nested_path = PathBuf::from_iter(self.stack.iter().map(|d| &d.path));
-        (&self.nested_path, finished)
+    pub fn pop_details(&mut self) -> Option<EntryDetails> {
+        self.stack.pop()
     }
 
     pub fn current_depth(&self) -> usize {
@@ -53,7 +50,22 @@ impl ArchiveStack {
         self.stack.is_empty()
     }
 
-    pub fn nested_path(&self) -> &Path {
-        &self.nested_path
+    pub fn full_path(&self) -> PathBuf {
+        PathBuf::from_iter(self.stack.iter().map(|d| d.path.as_path()))
+    }
+
+    pub fn root_path(&self) -> &Path {
+        self.stack
+            .first()
+            .map(|d| d.path.as_path())
+            .unwrap_or(Path::new(""))
+    }
+
+    pub fn nested_path(&self) -> PathBuf {
+        PathBuf::from_iter(self.nested_path_iter())
+    }
+
+    pub fn nested_path_iter(&self) -> impl Iterator<Item = &Path> {
+        self.stack.iter().skip(1).map(|d| d.path.as_path())
     }
 }
