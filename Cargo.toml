@@ -7,7 +7,7 @@ package.repository = "https://github.com/orf/archive-to-parquet"
 
 [package]
 name = "archive-to-parquet"
-version = "0.5.3"
+version = "0.5.4"
 edition.workspace = true
 license.workspace = true
 repository.workspace = true
@@ -16,7 +16,7 @@ description = "Recursively convert archives to parquet files"
 default-run = "archive-to-parquet"
 
 [dependencies]
-anyreader-walker = { path = "crates/anyreader-walker", version = "0.1.1" }
+anyreader-walker = { path = "crates/anyreader-walker", version = "0.1.2" }
 arrow = { version = "54.0", default-features = false }
 parquet = "54.0"
 clap = { version = "4.5.23", features = ["derive"] }
