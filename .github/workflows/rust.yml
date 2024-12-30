@@ -73,6 +73,7 @@ jobs:
         run: mise run release-build --target ${{ matrix.target }}
 
       - name: Copy release binaries
+        shell: bash
         run: |
           cp target/${{ matrix.target }}/release/archive-to-parquet archive-to-parquet-${{ matrix.target }} || true
           cp target/release/archive-to-parquet archive-to-parquet-${{ matrix.target }} || true
