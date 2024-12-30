@@ -8,7 +8,7 @@ use clap::Parser;
 use indicatif::MultiProgress;
 pub use parquet::basic::Compression as ParquetCompression;
 use std::fs::File;
-use std::io::{stderr, Stderr, Write};
+use std::io::{stderr, BufRead, Stderr, Write};
 use std::num::NonZeroUsize;
 use std::path::PathBuf;
 use tracing::{error, info, Level};
@@ -25,7 +25,8 @@ const DEFAULT_OPTS: ConvertionOptions = ConvertionOptions::const_default();
 struct Args {
     /// Output Parquet file to create
     output: PathBuf,
-    /// Input paths to read
+
+    /// Input paths to read. Pass "-" to read paths from stdin
     #[clap(required = true)]
     paths: Vec<PathBuf>,
 
@@ -83,16 +84,30 @@ fn main() -> anyhow::Result<()> {
     let mut converter = ProgressBarConverter::new(options);
     setup_tracing(converter.progress().clone())?;
 
-    info!("Converting {} files to Parquet", args.paths.len());
+    let paths = if args.paths.len() == 1 && args.paths[0].to_string_lossy() == "-" {
+        info!("Reading paths from stdin");
+        std::io::stdin()
+            .lock()
+            .lines()
+            .map(|line| line.map(PathBuf::from))
+            .collect::<Result<Vec<_>, _>>()
+            .context("Reading paths from stdin")?
+    } else {
+        args.paths
+    };
+
+    info!("Converting {} files to Parquet", paths.len());
     info!("Options: {}", converter.options());
 
-    let output_file =
-        File::create(&args.output).with_context(|| format!("Creating file {:?}", args.output))?;
-    for path in args.paths {
+    for path in paths {
         converter
             .add_paths([&path], &channel)
             .with_context(|| format!("Adding path {path:?}"))?;
     }
+
+    let output_file =
+        File::create(&args.output).with_context(|| format!("Creating file {:?}", args.output))?;
+
     let counts = converter
         .convert(output_file, channel)
         .context("Converting")?;
