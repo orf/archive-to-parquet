@@ -16,7 +16,7 @@ description = "Recursively convert archives to parquet files"
 default-run = "archive-to-parquet"
 
 [dependencies]
-extract-strings = { path = "crates/extract-strings", version = "0.1.0" }
+extract-strings = { path = "crates/extract-strings", version = "0.2.0" }
 anyreader-walker = { path = "crates/anyreader-walker", version = "0.1.2" }
 arrow = { version = "54.0", default-features = false }
 parquet = "54.0"
