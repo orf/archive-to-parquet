@@ -16,6 +16,7 @@ description = "Recursively convert archives to parquet files"
 default-run = "archive-to-parquet"
 
 [dependencies]
+extract-strings = { path = "crates/extract-strings", version = "0.1.0" }
 anyreader-walker = { path = "crates/anyreader-walker", version = "0.1.2" }
 arrow = { version = "54.0", default-features = false }
 parquet = "54.0"
@@ -29,7 +30,7 @@ simdutf8 = "0.1.5"
 crossbeam-channel = "0.5.14"
 derive-new = "0.7.0"
 indicatif = "0.17.9"
-strum = {version = "0.26.3", features = ["derive"]}
+strum = { version = "0.26.3", features = ["derive"] }
 anyhow = "1.0.95"
 rlimit = "0.10.2"
 tracing-appender = "0.2.3"

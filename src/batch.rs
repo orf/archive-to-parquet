@@ -1,5 +1,5 @@
 use crate::hasher::{HashedWriter, HASH_SIZE};
-use crate::{ConvertionOptions, IncludeType};
+use crate::{ConvertionOptions, FormatKind, IncludeType};
 use anyreader_walker::FileEntry;
 use arrow::array::{
     Array, ArrayBuilder, AsArray, BooleanArray, FixedSizeBinaryBuilder, LargeBinaryBuilder,
@@ -10,6 +10,7 @@ use arrow::datatypes::{DataType, Field, Schema, SchemaRef, UInt64Type};
 use arrow::error::ArrowError;
 use arrow::record_batch::RecordBatch;
 use byte_unit::Byte;
+use extract_strings::AsciiStrings;
 use std::fmt::{Display, Formatter};
 use std::io::{Read, Write};
 use std::ops::Range;
@@ -67,6 +68,7 @@ pub struct OutputBatch {
     content: LargeBinaryBuilder,
     hashes: FixedSizeBinaryBuilder,
     options: ConvertionOptions,
+    extract_strings: bool,
     // target_content_size: Byte,
     total_content_size: Byte,
 }
@@ -83,6 +85,7 @@ impl OutputBatch {
             content: LargeBinaryBuilder::with_capacity(capacity, capacity * 1024),
             hashes: FixedSizeBinaryBuilder::with_capacity(capacity, HASH_SIZE as i32),
             total_content_size: 0u64.into(),
+            extract_strings: options.extract_strings,
             options,
         }
     }
@@ -106,10 +109,17 @@ impl OutputBatch {
 
         source.push(entry.path());
         self.paths.append_value(source.to_string_lossy());
-        // Copy the data into the buffer, and finish it with appending an empty value.
+
         let mut hashed_writer = HashedWriter::new(&mut self.content);
-        let bytes_written = infallable_copy(entry, &mut hashed_writer);
-        let digest = hashed_writer.into_digest();
+        if self.extract_strings && entry.format() == FormatKind::Executable {
+            for string in entry.iter_ascii_strings(10) {
+                writeln!(hashed_writer, "{}", string).unwrap();
+            }
+        } else {
+            // Copy the data into the buffer, and finish it with appending an empty value.
+            infallable_copy(entry, &mut hashed_writer);
+        };
+        let (digest, bytes_written) = hashed_writer.into_inner();
         self.content.append_value("");
         self.hashes
             .append_value(digest.as_ref())

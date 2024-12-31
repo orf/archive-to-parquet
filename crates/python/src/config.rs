@@ -22,6 +22,7 @@ pub struct PyConvertionOptions {
     pub max_size: Option<u64>,
     pub batch_count: usize,
     pub batch_size: u64,
+    pub extract_executable_strings: bool,
 }
 
 impl From<ConvertionOptions> for PyConvertionOptions {
@@ -35,6 +36,7 @@ impl From<ConvertionOptions> for PyConvertionOptions {
             max_size: value.max_size.map(|v| v.as_u64()),
             batch_count: value.batch_count,
             batch_size: value.batch_size.into(),
+            extract_executable_strings: value.extract_strings,
         }
     }
 }
@@ -56,6 +58,7 @@ impl From<&PyConvertionOptions> for ConvertionOptions {
             max_size: val.max_size.map(Byte::from),
             batch_count: val.batch_count,
             batch_size: val.batch_size.into(),
+            extract_strings: val.extract_executable_strings,
         }
     }
 }

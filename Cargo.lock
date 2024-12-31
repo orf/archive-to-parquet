@@ -195,6 +195,7 @@ dependencies = [
  "clap",
  "crossbeam-channel",
  "derive-new",
+ "extract-strings",
  "indicatif",
  "parquet",
  "rayon",

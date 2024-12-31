@@ -30,6 +30,7 @@ pub struct ConvertionOptions {
     pub max_size: Option<Byte>,
     pub batch_count: usize,
     pub batch_size: Byte,
+    pub extract_strings: bool,
 }
 
 impl ConvertionOptions {
@@ -44,6 +45,7 @@ impl ConvertionOptions {
             batch_count: 14,
             // Also needs changing in the Args struct inside main.rs
             batch_size: Byte::from_u64_with_unit(100, Unit::MB).unwrap(),
+            extract_strings: false,
         }
     }
 

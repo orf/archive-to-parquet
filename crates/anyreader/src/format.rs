@@ -55,6 +55,18 @@ impl<T: Read> AnyFormat<T> {
             FormatKind::Tar
         } else if infer::archive::is_zip(buf) {
             FormatKind::Zip
+        } else if infer::app::is_coff(buf)
+            || infer::app::is_elf(buf)
+            || infer::app::is_mach(buf)
+            || infer::app::is_dex(buf)
+            || infer::app::is_llvm(buf)
+            || infer::app::is_java(buf)
+            || infer::app::is_elf(buf)
+            || infer::app::is_dll(buf)
+            || infer::app::is_exe(buf)
+            || infer::app::is_wasm(buf)
+        {
+            FormatKind::Executable
         } else {
             format
         };
@@ -114,6 +126,8 @@ pub enum FormatKind {
     /// Tar archive. Note: this may be compressed with any of the
     /// previous compression formats (i.e. tar.gz, tar.zst, ...)
     Tar,
+    /// An executable format, such as ELF.
+    Executable,
     /// Unknown format. This is the fallback when the format is not recognized, and
     /// the associated [AnyFormat] will read the data as-is.
     #[default]

@@ -64,13 +64,17 @@ impl<T: Read, const N: usize> Iterator for AsciiIterator<T, N> {
         loop {
             debug_log!("Started iteration: {:?}", self);
             if self.slice_range.is_empty() {
-                let read = self.reader.read(&mut self.slice).unwrap();
+                let Ok(read) = self.reader.read(&mut self.slice) else {
+                    return None;
+                };
                 debug_log!("Read {} bytes", read);
                 if read == 0 {
                     if self.partial_string.len() >= self.min_length {
-                        let res = std::str::from_utf8(&self.partial_string)
-                            .unwrap()
-                            .to_string();
+                        let Ok(res) = std::str::from_utf8(&self.partial_string) else {
+                            self.partial_string.clear();
+                            return None;
+                        };
+                        let res = res.to_string();
                         self.partial_string.clear();
                         return Some(res);
                     }
@@ -94,9 +98,11 @@ impl<T: Read, const N: usize> Iterator for AsciiIterator<T, N> {
                         self.slice_range = idx..self.slice_range.end;
 
                         if self.partial_string.len() >= self.min_length {
-                            let res = std::str::from_utf8(&self.partial_string)
-                                .unwrap()
-                                .to_string();
+                            let Ok(res) = std::str::from_utf8(&self.partial_string) else {
+                                self.partial_string.clear();
+                                return None;
+                            };
+                            let res = res.to_string();
                             self.partial_string.clear();
                             debug_log!("Found string: {:?} - (self={self:?})", res);
                             return Some(res);

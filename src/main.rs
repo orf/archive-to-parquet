@@ -74,6 +74,10 @@ struct Args {
     /// Disable progress bars
     #[clap(long)]
     no_progress: bool,
+
+    /// Extract strings from executables
+    #[clap(long)]
+    extract_executable_strings: bool,
 }
 fn main() -> anyhow::Result<()> {
     let args = Args::parse();
@@ -90,6 +94,7 @@ fn do_main(args: Args) -> anyhow::Result<()> {
         args.max_size,
         args.batch_count,
         args.batch_size,
+        args.extract_executable_strings,
     );
 
     let channel = new_record_batch_channel(options.batch_count);

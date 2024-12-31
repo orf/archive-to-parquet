@@ -76,6 +76,14 @@ mod tests {
     }
 
     #[test]
+    fn test_executable() {
+        let self_exe = std::env::current_exe().unwrap();
+        let data = std::fs::read(self_exe).unwrap();
+        let res = AnyFormat::from_reader(data.as_slice()).unwrap();
+        assert_eq!(res.kind, FormatKind::Executable);
+    }
+
+    #[test]
     fn test_tar() {
         let tar_data = tar_archive(vec![("test", TEST_DATA)]);
         assert!(
