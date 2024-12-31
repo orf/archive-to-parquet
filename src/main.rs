@@ -1,17 +1,19 @@
 use anyhow::{bail, Context};
-use archive_to_parquet::Converter;
 use archive_to_parquet::{
-    new_record_batch_channel, ConvertionOptions, IncludeType, ProgressBarConverter,
+    new_record_batch_channel, ConversionCounter, ConvertionOptions, IncludeType,
+    ProgressBarConverter, StandardConverter,
 };
+use archive_to_parquet::{Converter, RecordBatchChannel};
 use byte_unit::Byte;
 use clap::Parser;
 use indicatif::MultiProgress;
 pub use parquet::basic::Compression as ParquetCompression;
 use std::fs::File;
-use std::io::{stderr, BufRead, BufWriter, Stderr, Write};
+use std::io::{stderr, BufRead, BufReader, BufWriter, Stderr, Write};
 use std::num::NonZeroUsize;
 use std::path::PathBuf;
 use tracing::{error, info, Level};
+use tracing_appender::non_blocking::WorkerGuard;
 use tracing_subscriber::fmt::MakeWriter;
 use tracing_subscriber::{fmt, layer::SubscriberExt, util::SubscriberInitExt, EnvFilter};
 
@@ -68,6 +70,10 @@ struct Args {
     /// Log file to write messages to
     #[clap(long)]
     log_file: Option<PathBuf>,
+
+    /// Disable progress bars
+    #[clap(long)]
+    no_progress: bool,
 }
 fn main() -> anyhow::Result<()> {
     let args = Args::parse();
@@ -88,20 +94,31 @@ fn do_main(args: Args) -> anyhow::Result<()> {
 
     let channel = new_record_batch_channel(options.batch_count);
 
-    let mut converter = ProgressBarConverter::new(options);
-    let (tracing_writer, _guard) = match args.log_file {
-        None => {
-            let writer = TracingProgressWriter::new(converter.progress().clone(), stderr());
-            tracing_appender::non_blocking(writer)
-        }
-        Some(p) => {
-            let file = File::create(&p).with_context(|| format!("Creating log file {:?}", p))?;
-            tracing_appender::non_blocking(BufWriter::new(file))
-        }
+    let counts = if args.no_progress {
+        let converter: StandardConverter<BufReader<File>> = StandardConverter::new(options);
+        let _guard = setup_tracing_output(args.log_file, None)?;
+        run_converter(converter, channel, args.paths, args.output)?
+    } else {
+        let converter: ProgressBarConverter<BufReader<File>> = ProgressBarConverter::new(options);
+        let _guard = setup_tracing_output(args.log_file, Some(converter.progress().clone()))?;
+        run_converter(converter, channel, args.paths, args.output)?
     };
-    setup_tracing(tracing_writer)?;
 
-    let paths = if args.paths.len() == 1 && args.paths[0].to_string_lossy() == "-" {
+    if counts.output_rows == 0 {
+        error!("No rows written to output file. Raw stats: {counts:#?}");
+        bail!("No rows written to output file");
+    }
+
+    Ok(())
+}
+
+fn run_converter(
+    mut converter: impl Converter<BufReader<File>>,
+    channel: RecordBatchChannel,
+    paths: Vec<PathBuf>,
+    output_file: PathBuf,
+) -> anyhow::Result<ConversionCounter> {
+    let paths = if paths.len() == 1 && paths[0].to_string_lossy() == "-" {
         info!("Reading paths from stdin");
         std::io::stdin()
             .lock()
@@ -110,14 +127,13 @@ fn do_main(args: Args) -> anyhow::Result<()> {
             .collect::<Result<Vec<_>, _>>()
             .context("Reading paths from stdin")?
     } else {
-        args.paths
+        paths
     };
 
     let limit = rlimit::increase_nofile_limit((paths.len() * 100) as u64)?;
     info!("Increased open file limit to {}", limit);
     info!("Converting {} files to Parquet", paths.len());
     info!("Options: {}", converter.options());
-
     for path in paths {
         converter
             .add_paths([&path], &channel)
@@ -125,17 +141,30 @@ fn do_main(args: Args) -> anyhow::Result<()> {
     }
 
     let output_file =
-        File::create(&args.output).with_context(|| format!("Creating file {:?}", args.output))?;
-
-    let counts = converter
+        File::create(&output_file).with_context(|| format!("Creating file {:?}", output_file))?;
+    converter
         .convert(output_file, channel)
-        .context("Converting")?;
-    if counts.output_rows == 0 {
-        error!("No rows written to output file. Raw stats: {counts:#?}");
-        bail!("No rows written to output file");
-    }
+        .context("Converting")
+}
 
-    Ok(())
+fn setup_tracing_output(
+    log_file: Option<PathBuf>,
+    progress: Option<MultiProgress>,
+) -> anyhow::Result<WorkerGuard> {
+    let (writer, guard) = match (log_file, progress) {
+        (Some(log_file), _) => {
+            let file = File::create(&log_file)
+                .with_context(|| format!("Creating log file {:?}", log_file))?;
+            tracing_appender::non_blocking(BufWriter::new(file))
+        }
+        (_, Some(progress)) => {
+            let writer = TracingProgressWriter::new(progress, stderr());
+            tracing_appender::non_blocking(writer)
+        }
+        (None, None) => tracing_appender::non_blocking(stderr()),
+    };
+    setup_tracing(writer)?;
+    Ok(guard)
 }
 
 fn setup_tracing(writer: impl Write + Sync + Send + Clone + 'static) -> anyhow::Result<()> {
