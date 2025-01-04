@@ -30,7 +30,10 @@ env = { CROSS_NO_WARNINGS = "0", RUST_BACKTRACE = "1" }
 [tasks.integration-test]
 description = "Run integration test"
 shell = 'bash -c'
-run = 'cross run --locked --target={{option(name="target")}} -- test_data/output.parquet test_data/gping/*'
+run = [
+    'cross run --locked --target={{option(name="target")}} -- test_data/output.parquet test_data/gping/* --unique',
+    'cross run --locked --target={{option(name="target")}} -- test_data/output.parquet https://github.com/orf/gping/archive/e66b02167fa0cb2c5bae957e730d19ac9c22de47.tar.gz --urls --unique',
+]
 depends = ["test-data-gping"]
 env = { CROSS_NO_WARNINGS = "0", RUST_BACKTRACE = "1" }
 

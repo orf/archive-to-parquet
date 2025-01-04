@@ -9,7 +9,7 @@ use clap::Parser;
 use indicatif::MultiProgress;
 pub use parquet::basic::Compression as ParquetCompression;
 use std::fs::File;
-use std::io::{stderr, BufRead, BufReader, BufWriter, Stderr, Write};
+use std::io::{stderr, BufRead, BufReader, BufWriter, Read, Stderr, Write};
 use std::num::NonZeroUsize;
 use std::path::PathBuf;
 use tracing::{error, info, Level};
@@ -30,7 +30,11 @@ struct Args {
 
     /// Input paths to read. Pass "-" to read paths from stdin
     #[clap(required = true)]
-    paths: Vec<PathBuf>,
+    paths: Vec<String>,
+
+    /// Treat input paths as URLs
+    #[clap(long)]
+    urls: bool,
 
     /// Min file size to output.
     /// Files below this size are skipped
@@ -79,6 +83,7 @@ struct Args {
     #[clap(long)]
     extract_executable_strings: bool,
 }
+
 fn main() -> anyhow::Result<()> {
     let args = Args::parse();
     do_main(args)?;
@@ -99,14 +104,12 @@ fn do_main(args: Args) -> anyhow::Result<()> {
 
     let channel = new_record_batch_channel(options.batch_count);
 
+    let paths = get_paths(args.paths)?;
+
     let counts = if args.no_progress {
-        let converter: StandardConverter<BufReader<File>> = StandardConverter::new(options);
-        let _guard = setup_tracing_output(args.log_file, None)?;
-        run_converter(converter, channel, args.paths, args.output)?
+        run_progress_converter(channel, paths, args.log_file, args.output, args.urls, options)?
     } else {
-        let converter: ProgressBarConverter<BufReader<File>> = ProgressBarConverter::new(options);
-        let _guard = setup_tracing_output(args.log_file, Some(converter.progress().clone()))?;
-        run_converter(converter, channel, args.paths, args.output)?
+        run_no_progress_converter(channel, paths, args.log_file, args.output, args.urls, options)?
     };
 
     if counts.output_rows == 0 {
@@ -117,18 +120,12 @@ fn do_main(args: Args) -> anyhow::Result<()> {
     Ok(())
 }
 
-fn run_converter(
-    mut converter: impl Converter<BufReader<File>>,
-    channel: RecordBatchChannel,
-    paths: Vec<PathBuf>,
-    output_file: PathBuf,
-) -> anyhow::Result<ConversionCounter> {
-    let paths = if paths.len() == 1 && paths[0].to_string_lossy() == "-" {
+fn get_paths(paths: Vec<String>) -> anyhow::Result<Vec<String>> {
+    let paths = if paths.len() == 1 && paths[0] == "-" {
         info!("Reading paths from stdin");
         std::io::stdin()
             .lock()
             .lines()
-            .map(|line| line.map(PathBuf::from))
             .collect::<Result<Vec<_>, _>>()
             .context("Reading paths from stdin")?
     } else {
@@ -138,12 +135,65 @@ fn run_converter(
     let limit = rlimit::increase_nofile_limit((paths.len() * 100) as u64)?;
     info!("Increased open file limit to {}", limit);
     info!("Converting {} files to Parquet", paths.len());
-    info!("Options: {}", converter.options());
+    Ok(paths)
+}
+
+fn run_no_progress_converter(channel: RecordBatchChannel, paths: Vec<String>, log_file: Option<PathBuf>, output: PathBuf, urls: bool, options: ConvertionOptions) -> anyhow::Result<ConversionCounter> {
+    if urls {
+        let mut converter: StandardConverter<reqwest::blocking::Response> = StandardConverter::new(options);
+        let _guard = setup_tracing_output(log_file, None)?;
+        add_urls_to_converter(paths, &channel, &mut converter)?;
+        Ok(run_converter(converter, channel, output)?)
+    } else {
+        let mut converter: StandardConverter<BufReader<File>> = StandardConverter::new(options);
+        let _guard = setup_tracing_output(log_file, None)?;
+        add_files_to_converter(paths, &channel, &mut converter)?;
+        Ok(run_converter(converter, channel, output)?)
+    }
+}
+
+fn run_progress_converter(channel: RecordBatchChannel, paths: Vec<String>, log_file: Option<PathBuf>, output: PathBuf, urls: bool, options: ConvertionOptions) -> anyhow::Result<ConversionCounter> {
+    if urls {
+        let mut converter: ProgressBarConverter<reqwest::blocking::Response> = ProgressBarConverter::new(options);
+        let _guard = setup_tracing_output(log_file, Some(converter.progress().clone()))?;
+        add_urls_to_converter(paths, &channel, &mut converter)?;
+        Ok(run_converter(converter, channel, output)?)
+    } else {
+        let mut converter: ProgressBarConverter<BufReader<File>> = ProgressBarConverter::new(options);
+        let _guard = setup_tracing_output(log_file, Some(converter.progress().clone()))?;
+        add_files_to_converter(paths, &channel, &mut converter)?;
+        Ok(run_converter(converter, channel, output)?)
+    }
+}
+
+fn add_urls_to_converter(urls: Vec<String>, channel: &RecordBatchChannel, converter: &mut impl Converter<reqwest::blocking::Response>) -> anyhow::Result<()> {
+    let session = reqwest::blocking::Client::new();
+    for url in urls {
+        let response = session.get(&url).send().with_context(|| format!("Fetching URL {url:?}"))?;
+        let content_length = response.content_length().unwrap_or_default();
+        let reader = response.error_for_status().with_context(|| format!("Fetching URL {url:?}"))?;
+        converter
+            .add_readers([(&url, content_length, reader)], channel)
+            .with_context(|| format!("Adding URL {url:?}"))?;
+    }
+    Ok(())
+}
+
+fn add_files_to_converter(paths: Vec<String>, channel: &RecordBatchChannel, converter: &mut impl Converter<BufReader<File>>) -> anyhow::Result<()> {
     for path in paths {
         converter
-            .add_paths([&path], &channel)
+            .add_paths([&path], channel)
             .with_context(|| format!("Adding path {path:?}"))?;
     }
+    Ok(())
+}
+
+fn run_converter<T: Read + Send>(
+    converter: impl Converter<T>,
+    channel: RecordBatchChannel,
+    output_file: PathBuf,
+) -> anyhow::Result<ConversionCounter> {
+    info!("Options: {}", converter.options());
 
     let output_file =
         File::create(&output_file).with_context(|| format!("Creating file {:?}", output_file))?;
