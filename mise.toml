@@ -5,6 +5,7 @@ pre-commit = "latest"
 uv = "latest"
 "pipx:maturin" = {version = "latest" }
 "cargo:https://github.com/cross-rs/cross" = { version = "branch:main", crate = "cross", locked=false }
+"cargo:cargo-release" = "latest"
 
 [tasks.test-data-gping]
 description = "Download gping source code"
@@ -67,6 +68,9 @@ env = { RUSTFLAGS = '-C target_cpu=native' }
 [tasks.build-python]
 description = "Build python"
 run = 'maturin build'
+
+[tasks.release]
+run = "cargo release"
 
 #
 #[tasks.bench]

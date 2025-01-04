@@ -107,9 +107,23 @@ fn do_main(args: Args) -> anyhow::Result<()> {
     let paths = get_paths(args.paths)?;
 
     let counts = if args.no_progress {
-        run_progress_converter(channel, paths, args.log_file, args.output, args.urls, options)?
+        run_progress_converter(
+            channel,
+            paths,
+            args.log_file,
+            args.output,
+            args.urls,
+            options,
+        )?
     } else {
-        run_no_progress_converter(channel, paths, args.log_file, args.output, args.urls, options)?
+        run_no_progress_converter(
+            channel,
+            paths,
+            args.log_file,
+            args.output,
+            args.urls,
+            options,
+        )?
     };
 
     if counts.output_rows == 0 {
@@ -138,9 +152,17 @@ fn get_paths(paths: Vec<String>) -> anyhow::Result<Vec<String>> {
     Ok(paths)
 }
 
-fn run_no_progress_converter(channel: RecordBatchChannel, paths: Vec<String>, log_file: Option<PathBuf>, output: PathBuf, urls: bool, options: ConvertionOptions) -> anyhow::Result<ConversionCounter> {
+fn run_no_progress_converter(
+    channel: RecordBatchChannel,
+    paths: Vec<String>,
+    log_file: Option<PathBuf>,
+    output: PathBuf,
+    urls: bool,
+    options: ConvertionOptions,
+) -> anyhow::Result<ConversionCounter> {
     if urls {
-        let mut converter: StandardConverter<reqwest::blocking::Response> = StandardConverter::new(options);
+        let mut converter: StandardConverter<reqwest::blocking::Response> =
+            StandardConverter::new(options);
         let _guard = setup_tracing_output(log_file, None)?;
         add_urls_to_converter(paths, &channel, &mut converter)?;
         Ok(run_converter(converter, channel, output)?)
@@ -152,26 +174,44 @@ fn run_no_progress_converter(channel: RecordBatchChannel, paths: Vec<String>, lo
     }
 }
 
-fn run_progress_converter(channel: RecordBatchChannel, paths: Vec<String>, log_file: Option<PathBuf>, output: PathBuf, urls: bool, options: ConvertionOptions) -> anyhow::Result<ConversionCounter> {
+fn run_progress_converter(
+    channel: RecordBatchChannel,
+    paths: Vec<String>,
+    log_file: Option<PathBuf>,
+    output: PathBuf,
+    urls: bool,
+    options: ConvertionOptions,
+) -> anyhow::Result<ConversionCounter> {
     if urls {
-        let mut converter: ProgressBarConverter<reqwest::blocking::Response> = ProgressBarConverter::new(options);
+        let mut converter: ProgressBarConverter<reqwest::blocking::Response> =
+            ProgressBarConverter::new(options);
         let _guard = setup_tracing_output(log_file, Some(converter.progress().clone()))?;
         add_urls_to_converter(paths, &channel, &mut converter)?;
         Ok(run_converter(converter, channel, output)?)
     } else {
-        let mut converter: ProgressBarConverter<BufReader<File>> = ProgressBarConverter::new(options);
+        let mut converter: ProgressBarConverter<BufReader<File>> =
+            ProgressBarConverter::new(options);
         let _guard = setup_tracing_output(log_file, Some(converter.progress().clone()))?;
         add_files_to_converter(paths, &channel, &mut converter)?;
         Ok(run_converter(converter, channel, output)?)
     }
 }
 
-fn add_urls_to_converter(urls: Vec<String>, channel: &RecordBatchChannel, converter: &mut impl Converter<reqwest::blocking::Response>) -> anyhow::Result<()> {
+fn add_urls_to_converter(
+    urls: Vec<String>,
+    channel: &RecordBatchChannel,
+    converter: &mut impl Converter<reqwest::blocking::Response>,
+) -> anyhow::Result<()> {
     let session = reqwest::blocking::Client::new();
     for url in urls {
-        let response = session.get(&url).send().with_context(|| format!("Fetching URL {url:?}"))?;
+        let response = session
+            .get(&url)
+            .send()
+            .with_context(|| format!("Fetching URL {url:?}"))?;
         let content_length = response.content_length().unwrap_or_default();
-        let reader = response.error_for_status().with_context(|| format!("Fetching URL {url:?}"))?;
+        let reader = response
+            .error_for_status()
+            .with_context(|| format!("Fetching URL {url:?}"))?;
         converter
             .add_readers([(&url, content_length, reader)], channel)
             .with_context(|| format!("Adding URL {url:?}"))?;
@@ -179,7 +219,11 @@ fn add_urls_to_converter(urls: Vec<String>, channel: &RecordBatchChannel, conver
     Ok(())
 }
 
-fn add_files_to_converter(paths: Vec<String>, channel: &RecordBatchChannel, converter: &mut impl Converter<BufReader<File>>) -> anyhow::Result<()> {
+fn add_files_to_converter(
+    paths: Vec<String>,
+    channel: &RecordBatchChannel,
+    converter: &mut impl Converter<BufReader<File>>,
+) -> anyhow::Result<()> {
     for path in paths {
         converter
             .add_paths([&path], channel)
