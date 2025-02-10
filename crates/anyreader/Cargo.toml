@@ -9,11 +9,11 @@ description = "A library for reading compressed and uncompressed data without kn
 [dependencies]
 peekable = { version = "0.2.4", features = ["smallvec"] }
 zstd = { version = "0.13.2", default-features = false, features = ["arrays"] }
-infer = "0.16.0"
+infer = "0.19.0"
 flate2 = { version = "1.0.35", features = ["zlib-ng"], default-features = false }
 liblzma = "0.3.5"
 bzip2 = { version = "0.5.0" }
-strum = { version = "0.26.3", features = ["derive"] }
+strum = { version = "0.27.0", features = ["derive"] }
 
 tracing = "0.1.41"
 
