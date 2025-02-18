@@ -10,8 +10,8 @@ description = "A library for reading streams of compressed and uncompressed data
 anyreader = { path = "../anyreader", version = "0.2.0" }
 tar = "0.4.43"
 zip = "2.2.2"
-bytes = "1.9.0"
-smallvec = "1.13.2"
+bytes = "1.10.0"
+smallvec = "1.14.0"
 
 [dev-dependencies]
 anyreader = { path = "../anyreader", features = ["test-utils"] }
