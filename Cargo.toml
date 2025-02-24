@@ -18,10 +18,10 @@ default-run = "archive-to-parquet"
 [dependencies]
 extract-strings = { path = "crates/extract-strings", version = "0.4.0" }
 anyreader-walker = { path = "crates/anyreader-walker", version = "0.2.0" }
-arrow = { version = "54.0", default-features = false }
-parquet = "54.0"
-clap = { version = "4.5.23", features = ["derive"] }
-ring = "0.17.8"
+arrow = { version = "54.2", default-features = false }
+parquet = "54.2"
+clap = { version = "4.5.30", features = ["derive"] }
+ring = "0.17.11"
 byte-unit = "5.1.6"
 tracing = { version = "0.1.40" }
 tracing-subscriber = { version = "0.3.19", features = ["env-filter"] }
@@ -29,9 +29,9 @@ rayon = "1.10.0"
 simdutf8 = "0.1.5"
 crossbeam-channel = "0.5.14"
 derive-new = "0.7.0"
-indicatif = "0.17.9"
-strum = { version = "0.26.3", features = ["derive"] }
-anyhow = "1.0.95"
+indicatif = "0.17.11"
+strum = { version = "0.27.1", features = ["derive"] }
+anyhow = "1.0.96"
 rlimit = "0.10.2"
 tracing-appender = "0.2.3"
 reqwest = { version = "0.12.12", default-features = false, features = ["blocking", "http2", "macos-system-configuration", "stream", "rustls-tls"] }
