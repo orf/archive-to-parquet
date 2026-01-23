@@ -1,6 +1,6 @@
+use crate::ConvertionOptions;
 use crate::batch::arrow_schema;
 use crate::hasher::HASH_SIZE;
-use crate::ConvertionOptions;
 use arrow::array::{Array, AsArray, BooleanArray};
 use arrow::compute::filter_record_batch;
 use arrow::record_batch::RecordBatch;

@@ -1,5 +1,5 @@
 use crate::progress::OutputCounter;
-use crate::{new_parquet_writer, ConvertionOptions, ParquetSink};
+use crate::{ConvertionOptions, ParquetSink, new_parquet_writer};
 use arrow::record_batch::RecordBatch;
 use crossbeam_channel::{Receiver, Sender};
 use indicatif::{DecimalBytes, HumanCount, HumanDuration};

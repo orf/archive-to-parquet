@@ -35,12 +35,12 @@ impl<'a, T: Read + 'a> ArchiveVisitor<'a> for TarWalker<T> {
 
 #[cfg(test)]
 mod tests {
-    use crate::tests::{assert_visitor_equal, TestVisitor, TEST_DATA};
+    use crate::tests::{TEST_DATA, TestVisitor, assert_visitor_equal};
 
     use crate::entry::FileEntry;
     use crate::walkers::ArchiveVisitor;
-    use anyreader::test::tar_archive;
     use anyreader::FormatKind;
+    use anyreader::test::tar_archive;
     use std::path::PathBuf;
 
     #[test]

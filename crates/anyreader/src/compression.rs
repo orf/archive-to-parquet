@@ -105,8 +105,8 @@ fn is_zstd(buffer: &[u8]) -> bool {
 
 #[cfg(test)]
 mod tests {
-    use crate::test::{assert_data_equal, bz2_data, gzip_data, read_vec, xz_data, zstd_data};
     use crate::AnyReader;
+    use crate::test::{assert_data_equal, bz2_data, gzip_data, read_vec, xz_data, zstd_data};
     pub const TEST_DATA: &[u8] = b"hello world";
 
     #[test]

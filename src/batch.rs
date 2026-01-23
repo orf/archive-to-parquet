@@ -1,4 +1,4 @@
-use crate::hasher::{HashedWriter, HASH_SIZE};
+use crate::hasher::{HASH_SIZE, HashedWriter};
 use crate::{ConvertionOptions, FormatKind, IncludeType};
 use anyreader_walker::FileEntry;
 use arrow::array::{

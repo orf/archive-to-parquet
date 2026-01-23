@@ -1,7 +1,7 @@
+use crate::ConvertionOptions;
 use crate::batch::OutputBatch;
 use crate::channel::RecordBatchSender;
 use crate::progress::Counters;
-use crate::ConvertionOptions;
 use anyreader_walker::{AnyWalker, ArchiveStack, EntryDetails, FileEntry, FormatKind};
 use std::io::Read;
 use std::path::PathBuf;

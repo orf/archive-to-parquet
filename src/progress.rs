@@ -4,8 +4,8 @@ use arrow::array::RecordBatch;
 use indicatif::style::ProgressTracker;
 use indicatif::{DecimalBytes, HumanCount, ProgressState};
 use std::fmt::Write;
-use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Arc;
+use std::sync::atomic::{AtomicU64, Ordering};
 use std::time::Instant;
 
 #[derive(Debug, Default)]

@@ -1,7 +1,7 @@
-use anyhow::{bail, Context};
+use anyhow::{Context, bail};
 use archive_to_parquet::{
-    new_record_batch_channel, ConversionCounter, ConvertionOptions, IncludeType,
-    ProgressBarConverter, StandardConverter,
+    ConversionCounter, ConvertionOptions, IncludeType, ProgressBarConverter, StandardConverter,
+    new_record_batch_channel,
 };
 use archive_to_parquet::{Converter, RecordBatchChannel};
 use byte_unit::Byte;
@@ -9,13 +9,13 @@ use clap::Parser;
 use indicatif::MultiProgress;
 pub use parquet::basic::Compression as ParquetCompression;
 use std::fs::File;
-use std::io::{stderr, BufRead, BufReader, BufWriter, Read, Stderr, Write};
+use std::io::{BufRead, BufReader, BufWriter, Read, Stderr, Write, stderr};
 use std::num::NonZeroUsize;
 use std::path::PathBuf;
-use tracing::{error, info, Level};
+use tracing::{Level, error, info};
 use tracing_appender::non_blocking::WorkerGuard;
 use tracing_subscriber::fmt::MakeWriter;
-use tracing_subscriber::{fmt, layer::SubscriberExt, util::SubscriberInitExt, EnvFilter};
+use tracing_subscriber::{EnvFilter, fmt, layer::SubscriberExt, util::SubscriberInitExt};
 
 pub fn default_threads() -> NonZeroUsize {
     std::thread::available_parallelism().unwrap_or(NonZeroUsize::new(1).unwrap())

@@ -14,9 +14,9 @@ mod sink;
 mod visitor;
 
 pub use anyreader_walker::{AnyWalker, ArchiveStack, EntryDetails, FileEntry, FormatKind};
-pub use channel::{new_record_batch_channel, ConversionCounter, RecordBatchChannel};
+pub use channel::{ConversionCounter, RecordBatchChannel, new_record_batch_channel};
 pub use converter::{Converter, ProgressBarConverter, StandardConverter};
-pub use sink::{new_parquet_writer, IncludeType, ParquetSink};
+pub use sink::{IncludeType, ParquetSink, new_parquet_writer};
 pub use visitor::*;
 
 #[allow(clippy::too_many_arguments)]
