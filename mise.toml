@@ -1,7 +1,6 @@
 [tools]
 rust = "stable"
 pre-commit = "latest"
-uv = "latest"
 "cargo:https://github.com/cross-rs/cross" = { version = "branch:main", crate = "cross", locked=false }
 "cargo:cargo-release" = "latest"
 
