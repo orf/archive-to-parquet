@@ -8,9 +8,9 @@ description = "A library for reading streams of compressed and uncompressed data
 
 [dependencies]
 anyreader = { path = "../anyreader", version = "0.2.1" }
-tar = "0.4.43"
+tar = "0.4.44"
 zip = "7.2.0"
-bytes = "1.9.0"
+bytes = "1.11.0"
 smallvec = "1.13.2"
 
 [dev-dependencies]

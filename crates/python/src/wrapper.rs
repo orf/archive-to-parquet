@@ -1,7 +1,6 @@
 use pyo3::exceptions::PyValueError;
-use pyo3::prelude::PyAnyMethods;
 use pyo3::types::PyString;
-use pyo3::{Bound, FromPyObject, IntoPyObject, PyAny, PyErr, PyResult, Python};
+use pyo3::{Borrowed, Bound, FromPyObject, IntoPyObject, PyAny, PyErr, PyResult, Python};
 use std::fmt::{Debug, Display};
 use std::str::FromStr;
 
@@ -10,11 +9,13 @@ pub struct PyStringWrapper<T> {
     pub inner: T,
 }
 
-impl<T: FromStr> FromPyObject<'_> for PyStringWrapper<T>
+impl<'a, 'py, T: FromStr> FromPyObject<'a, 'py> for PyStringWrapper<T>
 where
     <T as FromStr>::Err: Debug + Display,
 {
-    fn extract_bound(ob: &Bound<'_, PyAny>) -> PyResult<Self> {
+    type Error = PyErr;
+
+    fn extract(ob: Borrowed<'a, 'py, PyAny>) -> PyResult<Self> {
         let s = ob.extract::<String>()?;
         Ok(Self::new(T::from_str(&s).map_err(|e| {
             PyErr::new::<PyValueError, _>(format!("Invalid value {:?} - {e}", s))
