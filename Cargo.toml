@@ -7,7 +7,7 @@ package.repository = "https://github.com/orf/archive-to-parquet"
 
 [package]
 name = "archive-to-parquet"
-version = "0.8.0"
+version = "0.9.0"
 edition.workspace = true
 license.workspace = true
 repository.workspace = true
