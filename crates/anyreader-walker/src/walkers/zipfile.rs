@@ -15,8 +15,8 @@ impl<T: Read> ZipWalker<T> {
     }
 }
 
-impl<'a, T: Read> ArchiveVisitor<'a> for ZipWalker<T> {
-    type Item = ZipFile<'a>;
+impl<'a, T: Read + 'a> ArchiveVisitor<'a> for ZipWalker<T> {
+    type Item = ZipFile<'a, T>;
 
     fn visit<V: AnyWalker>(mut self, visitor: &mut V) -> std::io::Result<()> {
         while let Ok(Some(entry)) = zip::read::read_zipfile_from_stream(&mut self.archive) {

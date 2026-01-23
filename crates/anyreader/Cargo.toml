@@ -1,6 +1,6 @@
 [package]
 name = "anyreader"
-version = "0.2.0"
+version = "0.2.1"
 edition.workspace = true
 license.workspace = true
 repository.workspace = true
@@ -18,14 +18,14 @@ strum = { version = "0.26.3", features = ["derive"] }
 tracing = "0.1.41"
 
 tar = { version = "0.4.43", optional = true }
-zip = { version = "2.2.2", optional = true }
+zip = { version = "7.2.0", optional = true }
 hex = { version = "0.4.3", optional = true }
 
 [dev-dependencies]
 assert_matches = "1.5.0"
 criterion = { version = "0.5", features = ["html_reports"] }
 tar = "0.4.43"
-zip = "2.2.2"
+zip = "7.2.0"
 
 [features]
 default = []
