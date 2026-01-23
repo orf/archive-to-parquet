@@ -1,7 +1,8 @@
-use anyreader::test::{bz2_data, gzip_data, xz_data, zstd_data};
 use anyreader::AnyReader;
+use anyreader::test::{bz2_data, gzip_data, xz_data, zstd_data};
 use anyreader::{AnyFormat, FormatKind};
-use criterion::{black_box, criterion_group, criterion_main, Criterion, Throughput};
+use criterion::{Criterion, Throughput, criterion_group, criterion_main};
+use std::hint::black_box;
 
 fn make_compression() -> Vec<(FormatKind, Vec<u8>)> {
     let test_data_file = include_bytes!("bench_detection.rs");
