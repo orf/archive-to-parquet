@@ -117,9 +117,9 @@ jobs:
           - platform: linux/arm64
             runner: ubuntu-24.04
           - target: ''
-            runner: macos-13
-          - target: ''
             runner: macos-14
+          - target: ''
+            runner: macos-15
     steps:
       - uses: actions/checkout@v4
 
