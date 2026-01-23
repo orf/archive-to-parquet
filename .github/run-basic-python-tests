@@ -1,6 +1,0 @@
-#!/usr/bin/env bash
-set -e
-set -x
-
-uv pip install archive-to-parquet --find-links=target/wheels/ --verbose --only-binary=true
-uv run --no-sync python -m 'import archive_to_parquet; print(archive_to_parquet)'

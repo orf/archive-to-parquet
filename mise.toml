@@ -1,9 +1,7 @@
 [tools]
-python = "3.12"
 rust = "stable"
 pre-commit = "latest"
 uv = "latest"
-"pipx:maturin" = {version = "latest" }
 "cargo:https://github.com/cross-rs/cross" = { version = "branch:main", crate = "cross", locked=false }
 "cargo:cargo-release" = "latest"
 
@@ -64,10 +62,6 @@ description = "Run benchmarks"
 run = 'cross bench --locked --workspace --all-targets --exclude=py-archive-to-parquet -F bench'
 depends = ["test-data-gping"]
 env = { RUSTFLAGS = '-C target_cpu=native' }
-
-[tasks.build-python]
-description = "Build python"
-run = 'maturin build'
 
 [tasks.release]
 run = "cargo release"
