@@ -41,7 +41,7 @@ impl Visitor {
         let batch = self
             .batch
             .create_record_batch_and_reset()
-            .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e))?;
+            .map_err(std::io::Error::other)?;
         trace!("Sending batch with {} rows", batch.num_rows());
         self.counters.sent_batch();
         self.channel.send_batch(Ok(batch))?;

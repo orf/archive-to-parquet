@@ -12,16 +12,12 @@ use std::io::Write;
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq, clap::ValueEnum, strum::EnumString, strum::Display)]
 #[strum(serialize_all = "lowercase", ascii_case_insensitive)]
+#[derive(Default)]
 pub enum IncludeType {
+    #[default]
     All,
     Text,
     Binary,
-}
-
-impl Default for IncludeType {
-    fn default() -> Self {
-        Self::All
-    }
 }
 
 pub fn new_parquet_writer<T: Write + Send>(

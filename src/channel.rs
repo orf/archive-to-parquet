@@ -94,9 +94,9 @@ impl RecordBatchChannel {
         writer.flush()?;
         let metadata = writer.finish()?;
         let total_output_bytes: i64 = metadata
-            .row_groups
+            .row_groups()
             .iter()
-            .map(|rg| rg.total_compressed_size.unwrap_or_default())
+            .map(|rg| rg.compressed_size())
             .sum();
         let duration = start.elapsed();
         let conversion_counter: ConversionCounter = counters.into();

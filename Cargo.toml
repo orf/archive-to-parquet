@@ -2,7 +2,7 @@
 resolver = "2"
 members = ["crates/*"]
 package.license = "MIT"
-package.edition = "2021"
+package.edition = "2024"
 package.repository = "https://github.com/orf/archive-to-parquet"
 
 [package]
@@ -18,8 +18,8 @@ default-run = "archive-to-parquet"
 [dependencies]
 extract-strings = { path = "crates/extract-strings", version = "0.4.0" }
 anyreader-walker = { path = "crates/anyreader-walker", version = "0.2.0" }
-arrow = { version = "54.0", default-features = false }
-parquet = "54.0"
+arrow = { version = "57.2.0", default-features = false }
+parquet = "57.2.0"
 clap = { version = "4.5.23", features = ["derive"] }
 ring = "0.17.8"
 byte-unit = "5.1.6"
