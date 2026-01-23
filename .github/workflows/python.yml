@@ -40,11 +40,11 @@ jobs:
           # MacOS
           - image: null
             target: aarch64-apple-darwin
-            runner: macos-14
+            runner: macos-15
             compat: ""
           - image: null
             target: x86_64-apple-darwin
-            runner: macos-14
+            runner: macos-15-intel
             compat: ""
     container:
       image: ${{ matrix.image }}
