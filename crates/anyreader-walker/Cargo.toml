@@ -7,7 +7,7 @@ repository.workspace = true
 description = "A library for reading streams of compressed and uncompressed data without knowing the format in advance"
 
 [dependencies]
-anyreader = { path = "../anyreader", version = "0.2.1" }
+anyreader = { path = "../anyreader", version = "0.3.1" }
 tar = "0.4.44"
 zip = "7.2.0"
 bytes = "1.11.0"
