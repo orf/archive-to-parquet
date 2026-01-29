@@ -1,6 +1,6 @@
-use crate::entry::{EntryDetails, FileEntry};
-use crate::walkers::ArchiveVisitor;
-use anyreader::FormatKind;
+use crate::anyreader_walker::entry::{EntryDetails, FileEntry};
+use crate::anyreader_walker::walkers::ArchiveVisitor;
+use crate::anyreader::FormatKind;
 use std::io::Read;
 
 #[allow(unused_variables)]

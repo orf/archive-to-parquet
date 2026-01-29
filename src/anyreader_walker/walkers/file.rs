@@ -1,6 +1,6 @@
-use crate::entry::FileEntry;
-use crate::stack::AnyWalker;
-use crate::walkers::ArchiveVisitor;
+use crate::anyreader_walker::entry::FileEntry;
+use crate::anyreader_walker::stack::AnyWalker;
+use crate::anyreader_walker::walkers::ArchiveVisitor;
 use std::io::Read;
 
 pub struct FileWalker<T: Read> {

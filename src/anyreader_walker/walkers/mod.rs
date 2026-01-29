@@ -2,7 +2,7 @@ mod file;
 mod tarfile;
 mod zipfile;
 
-use crate::stack::AnyWalker;
+use crate::anyreader_walker::stack::AnyWalker;
 pub use file::FileWalker;
 use std::io::Read;
 pub use tarfile::TarWalker;

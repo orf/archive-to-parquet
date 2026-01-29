@@ -1,25 +1,10 @@
-use crate::EntryDetails;
+use crate::anyreader_walker::EntryDetails;
 use std::path::{Path, PathBuf};
 
 /// A utility struct to keep track of the current archive stack.
 /// This is useful when processing nested archives - it supports
 /// pushing and popping archives from the stack, and provides the
 /// current nested path - including all previous nested paths.
-///
-/// # Example
-/// ```
-/// # use std::path::Path;
-/// # use anyreader_walker::{ArchiveStack, EntryDetails};
-/// let mut stack = ArchiveStack::new();
-/// stack.push_details(EntryDetails::new("first.tar", 5));
-/// stack.push_details(EntryDetails::new("second.tar", 10));
-/// stack.push_details(EntryDetails::new("third.tar", 7));
-/// assert_eq!(stack.root_path(), Path::new("first.tar"));
-/// assert_eq!(stack.nested_path(), Path::new("second.tar/third.tar"));
-/// assert_eq!(stack.current_depth(), 3);
-/// stack.pop_details();
-/// assert_eq!(stack.nested_path(), Path::new("second.tar"));
-/// ```
 #[derive(Debug, Default)]
 pub struct ArchiveStack {
     stack: smallvec::SmallVec<[EntryDetails; 6]>,

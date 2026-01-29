@@ -1,6 +1,6 @@
 [workspace]
 resolver = "2"
-members = ["crates/*"]
+members = ["crates/extract-strings"]
 package.license = "MIT"
 package.edition = "2024"
 package.repository = "https://github.com/orf/archive-to-parquet"
@@ -17,7 +17,21 @@ default-run = "archive-to-parquet"
 
 [dependencies]
 extract-strings = { path = "crates/extract-strings", version = "0.4.1" }
-anyreader-walker = { path = "crates/anyreader-walker", version = "0.2.1" }
+
+# Dependencies from inlined anyreader crate
+peekable = { version = "0.4.1", features = ["smallvec"] }
+zstd = { version = "0.13.2", default-features = false, features = ["arrays"] }
+infer = "0.19.0"
+flate2 = { version = "1.1.8", features = ["zlib-ng"], default-features = false }
+liblzma = "0.4.5"
+bzip2 = "0.6.1"
+
+# Dependencies from inlined anyreader-walker crate
+tar = "0.4.44"
+zip = "7.2.0"
+bytes = "1.11.0"
+smallvec = "1.13.2"
+
 arrow = { version = "57.2.0", default-features = false }
 parquet = "57.2.0"
 clap = { version = "4.5.23", features = ["derive"] }

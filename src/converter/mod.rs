@@ -1,9 +1,9 @@
 mod base;
 mod progress;
 
+use crate::anyreader_walker::{EntryDetails, FormatKind};
 use crate::channel::{ConversionCounter, RecordBatchChannel};
 use crate::{ConvertionOptions, Visitor};
-use anyreader_walker::{EntryDetails, FormatKind};
 pub use base::StandardConverter;
 pub use progress::ProgressBarConverter;
 use std::fs::File;

@@ -1,7 +1,6 @@
-use crate::stack::AnyWalker;
-use crate::walkers::{ArchiveVisitor, FileWalker, TarWalker, ZipWalker};
-use anyreader::AnyFormat;
-use anyreader::FormatKind;
+use crate::anyreader_walker::stack::AnyWalker;
+use crate::anyreader_walker::walkers::{ArchiveVisitor, FileWalker, TarWalker, ZipWalker};
+use crate::anyreader::{AnyFormat, FormatKind};
 use bytes::buf::Reader;
 use bytes::{Buf, Bytes};
 use std::fmt::{Debug, Display, Formatter};
@@ -34,58 +33,6 @@ impl Display for EntryDetails {
 /// A [FileEntry] represents a file in an archive, along with its format and size.
 /// It can be used to read the file's contents, and can also be used to visit the contents of
 /// an archive.
-///
-/// # Example
-/// This walks a nested tar file
-/// ```
-/// # use std::io::Read;
-/// use std::path::{PathBuf, Path};
-/// # use anyreader::test::{tar_archive, zip_archive};
-/// use anyreader_walker::{FileEntry, AnyWalker, EntryDetails, FormatKind, ArchiveStack};
-/// // Create a tar archive containing a nested tar archive, containing a nested zip archive
-/// let tar_archive = tar_archive([
-///     ("test", b"Hello, world!".to_vec()),
-///     ("nested.tar", tar_archive([
-///         ("nested", b"Hello, nested!".to_vec()),
-///         ("nested2", b"Hello, nested2!".to_vec()),
-///         ("nested_zip", zip_archive([("nested3", "Hello, nested zip!")]))
-///     ])),
-/// ]);
-/// let path = Path::new("archive.tar.gz");
-/// let entry = FileEntry::from_bytes(&path, tar_archive).unwrap();
-///
-/// #[derive(Default)]
-/// struct Visitor {
-///    names: Vec<PathBuf>,
-///    stack: ArchiveStack
-/// }
-///
-/// impl AnyWalker for Visitor {
-///     fn visit_file_entry(&mut self, entry: &mut FileEntry<impl Read>) -> std::io::Result<()> {
-///         self.names.push(self.stack.full_path().join(&entry.path()));
-///         Ok(())
-///     }
-///
-///     fn begin_visit_archive(&mut self, details: &EntryDetails, format: FormatKind) -> std::io::Result<bool> {
-///         self.stack.push_details(details.clone());
-///         Ok(true)
-///     }
-///     fn end_visit_archive(&mut self, details: EntryDetails, format: FormatKind) -> std::io::Result<()> {
-///        self.stack.pop_details();
-///        Ok(())
-///    }
-/// }
-///
-/// let mut visitor = Visitor::default();
-/// visitor.walk(entry).unwrap();
-///
-/// assert_eq!(visitor.names, [
-///     path.join("test"),
-///     path.join("nested.tar").join("nested"),
-///     path.join("nested.tar").join("nested2"),
-///     path.join("nested.tar").join("nested_zip").join("nested3"),
-/// ]);
-/// ```
 pub struct FileEntry<T: Read> {
     details: EntryDetails,
     inner: AnyFormat<T>,

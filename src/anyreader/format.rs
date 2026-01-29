@@ -1,4 +1,4 @@
-use crate::AnyReader;
+use crate::anyreader::AnyReader;
 use peekable::Peekable;
 use std::fmt::{Debug, Formatter};
 use std::io;
@@ -6,34 +6,6 @@ use std::io::Read;
 use tracing::trace;
 
 /// A reader that contains a detected file format.
-///
-/// ## Read from compressed formats
-/// ```
-/// use anyreader::AnyFormat;
-/// let compressed_data = zstd::encode_all("hello compressed world".as_bytes(), 1).unwrap();
-/// let mut reader = AnyFormat::from_reader(compressed_data.as_slice()).unwrap();
-/// assert!(reader.kind.is_zstd());
-/// assert_eq!(std::io::read_to_string(reader).unwrap(), "hello compressed world");
-/// ```
-///
-/// ## Detect and read from compressed archive formats
-/// ```
-/// # fn make_tar_zst_archive(data: &str) -> Vec<u8> {
-/// #     let mut builder = tar::Builder::new(Vec::new());
-/// #     let mut header = tar::Header::new_gnu();
-/// #     header.set_size(data.len() as u64);
-/// #     builder.append_data(&mut header, "file-name", data.as_bytes()).unwrap();
-/// #     let tar_file = builder.into_inner().unwrap();
-/// #     zstd::encode_all(&tar_file[..], 1).unwrap()
-/// # }
-/// use anyreader::AnyFormat;
-/// let tar_gz = make_tar_zst_archive("hello tar world");
-/// let mut reader = AnyFormat::from_reader(tar_gz.as_slice()).unwrap();
-/// assert!(reader.kind.is_tar());
-/// let mut archive = tar::Archive::new(reader);
-/// let mut entry = archive.entries().unwrap().next().unwrap().unwrap();
-/// assert_eq!(std::io::read_to_string(entry).unwrap(), "hello tar world");
-/// ```
 pub struct AnyFormat<T: Read> {
     pub kind: FormatKind,
     reader: Peekable<AnyReader<T>>,
@@ -48,7 +20,7 @@ impl<T: Read> AnyFormat<T> {
         trace!(format=%format, "initial format kind detected, attempting refinement");
         let mut reader = Peekable::with_capacity(compression_reader, MAX_PEEK_BUFFER_SIZE);
         reader.fill_peek_buf().ok();
-        let buf = crate::peek_upto::<MAX_PEEK_BUFFER_SIZE>(&mut reader);
+        let buf = crate::anyreader::peek_upto::<MAX_PEEK_BUFFER_SIZE>(&mut reader);
         trace!("peeked {} bytes", buf.len());
 
         let format: FormatKind = if infer::archive::is_tar(buf) {

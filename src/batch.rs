@@ -1,6 +1,6 @@
+use crate::anyreader_walker::FileEntry;
 use crate::hasher::{HASH_SIZE, HashedWriter};
 use crate::{ConvertionOptions, FormatKind, IncludeType};
-use anyreader_walker::FileEntry;
 use arrow::array::{
     Array, ArrayBuilder, AsArray, BooleanArray, FixedSizeBinaryBuilder, LargeBinaryBuilder,
     PrimitiveBuilder, StringViewBuilder,

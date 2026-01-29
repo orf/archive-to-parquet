@@ -5,6 +5,8 @@ pub use parquet::basic::Compression;
 use std::fmt::Display;
 use std::num::NonZeroUsize;
 
+mod anyreader;
+mod anyreader_walker;
 mod batch;
 mod channel;
 mod converter;

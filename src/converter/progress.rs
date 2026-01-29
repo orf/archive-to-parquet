@@ -1,7 +1,7 @@
+use crate::anyreader_walker::{EntryDetails, FormatKind};
 use crate::channel::ConversionCounter;
 use crate::progress::{Counters, OutputCounter};
 use crate::{Converter, ConvertionOptions, RecordBatchChannel, StandardConverter, Visitor};
-use anyreader_walker::{EntryDetails, FormatKind};
 use indicatif::{MultiProgress, ProgressBar, ProgressBarIter};
 use std::io::{Read, Write};
 use std::path::PathBuf;

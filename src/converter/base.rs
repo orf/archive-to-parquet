@@ -1,8 +1,8 @@
+use crate::anyreader_walker::{EntryDetails, FileEntry, FormatKind};
 use crate::channel::ConversionCounter;
 use crate::converter::Converter;
 use crate::progress::OutputCounter;
 use crate::{ConvertionOptions, RecordBatchChannel, Visitor};
-use anyreader_walker::{EntryDetails, FileEntry, FormatKind};
 use std::io::{Read, Write};
 use std::path::PathBuf;
 

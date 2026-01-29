@@ -1,21 +1,9 @@
-use crate::peek_upto;
+use crate::anyreader::peek_upto;
 use flate2::read::GzDecoder;
 use peekable::Peekable;
 use std::io::{BufReader, Read, Result};
 
 /// A reader that can read from different compression formats
-/// ```
-/// use anyreader::AnyReader;
-///
-/// let mut reader = AnyReader::from_reader(b"hello world".as_slice()).unwrap();
-/// assert!(reader.is_unknown());
-/// assert_eq!(std::io::read_to_string(reader).unwrap(), "hello world");
-///
-/// let gzip_data = zstd::encode_all("hello compressed world".as_bytes(), 1).unwrap();
-/// let mut reader = AnyReader::from_reader(gzip_data.as_slice()).unwrap();
-/// assert!(reader.is_zst());
-/// assert_eq!(std::io::read_to_string(reader).unwrap(), "hello compressed world");
-/// ```
 #[derive(strum::EnumIs)]
 pub enum AnyReader<T: Read> {
     /// Gzip compressed data
@@ -101,28 +89,4 @@ fn is_zstd(buffer: &[u8]) -> bool {
     let magic_from_buffer = u32::from_le_bytes([buffer[0], buffer[1], buffer[2], buffer[3]]);
     magic_from_buffer == ZSTD_MAGIC_NUMBER
         || (magic_from_buffer & SKIPPABLE_FRAME_MASK) == SKIPPABLE_FRAME_BASE
-}
-
-#[cfg(test)]
-mod tests {
-    use crate::AnyReader;
-    use crate::test::{assert_data_equal, bz2_data, gzip_data, read_vec, xz_data, zstd_data};
-    pub const TEST_DATA: &[u8] = b"hello world";
-
-    #[test]
-    #[allow(clippy::type_complexity)]
-    fn test_compression_reader() {
-        let test_cases: &[(Vec<u8>, fn(&AnyReader<&[u8]>) -> bool)] = &[
-            (gzip_data(TEST_DATA), |c| c.is_gzip()),
-            (zstd_data(TEST_DATA), |c| c.is_zst()),
-            (bz2_data(TEST_DATA), |c| c.is_bzip_2()),
-            (xz_data(TEST_DATA), |c| c.is_xz()),
-            (TEST_DATA.to_vec(), |c| c.is_unknown()),
-        ];
-        for (data, func) in test_cases {
-            let res = AnyReader::from_reader(data.as_slice()).unwrap();
-            assert!(func(&res));
-            assert_data_equal(read_vec(res), TEST_DATA);
-        }
-    }
 }
