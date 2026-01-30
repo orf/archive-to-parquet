@@ -35,9 +35,9 @@ jobs:
           - aarch64-unknown-linux-gnu
           - aarch64-unknown-linux-musl
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
-      - uses: jdx/mise-action@v2
+      - uses: jdx/mise-action@v3
         with:
           install: "true"
           cache: "true"
@@ -79,7 +79,7 @@ jobs:
           cp target/${{ matrix.target }}/release/archive-to-parquet.exe archive-to-parquet-${{ matrix.target }} || true
         if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
         with:
           name: ${{ matrix.target }}-binary
@@ -88,7 +88,7 @@ jobs:
 
       - name: Publish artifacts and release
         if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
-        uses: houseabsolute/actions-rust-release@v0
+        uses: houseabsolute/actions-rust-release@v1
         with:
           executable-name: archive-to-parquet
           target: ${{ matrix.target }}
@@ -106,14 +106,14 @@ jobs:
       id-token: write
       attestations: write
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v7
         with:
           merge-multiple: true
       - name: Check artifacts
         run: ls -la .
       - name: Generate artifact attestation
         if: startsWith(github.ref, 'refs/tags/v')
-        uses: actions/attest-build-provenance@v2
+        uses: actions/attest-build-provenance@v3
         with:
           subject-path: '*'
       - name: Publish
@@ -132,9 +132,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout sources
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
-      - uses: jdx/mise-action@v2
+      - uses: jdx/mise-action@v3
         with:
           install: "true"
           cache: "true"
