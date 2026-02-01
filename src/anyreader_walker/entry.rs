@@ -1,6 +1,6 @@
+use crate::anyreader::{AnyFormat, FormatKind};
 use crate::anyreader_walker::stack::AnyWalker;
 use crate::anyreader_walker::walkers::{ArchiveVisitor, FileWalker, TarWalker, ZipWalker};
-use crate::anyreader::{AnyFormat, FormatKind};
 use bytes::buf::Reader;
 use bytes::{Buf, Bytes};
 use std::fmt::{Debug, Display, Formatter};
