@@ -50,6 +50,9 @@ rlimit = "0.10.2"
 tracing-appender = "0.2.3"
 reqwest = { version = "0.13.1", features = ["blocking", "http2", "stream"] }
 
+[dev-dependencies]
+hex = "0.4.3"
+
 [profile.release]
 lto = true
 codegen-units = 1

@@ -1,5 +1,7 @@
 mod entry;
 mod stack;
+#[cfg(test)]
+pub(crate) mod tests;
 mod utils;
 mod walkers;
 

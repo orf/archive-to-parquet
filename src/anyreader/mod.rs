@@ -1,5 +1,7 @@
 mod compression;
 mod format;
+#[cfg(test)]
+pub(crate) mod test;
 
 pub use crate::anyreader::compression::AnyReader;
 pub use crate::anyreader::format::{AnyFormat, FormatKind};

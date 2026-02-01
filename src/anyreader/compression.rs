@@ -90,3 +90,27 @@ fn is_zstd(buffer: &[u8]) -> bool {
     magic_from_buffer == ZSTD_MAGIC_NUMBER
         || (magic_from_buffer & SKIPPABLE_FRAME_MASK) == SKIPPABLE_FRAME_BASE
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::anyreader::test::{assert_data_equal, bz2_data, gzip_data, read_vec, xz_data, zstd_data};
+    use crate::anyreader::AnyReader;
+    pub const TEST_DATA: &[u8] = b"hello world";
+
+    #[test]
+    #[allow(clippy::type_complexity)]
+    fn test_compression_reader() {
+        let test_cases: &[(Vec<u8>, fn(&AnyReader<&[u8]>) -> bool)] = &[
+            (gzip_data(TEST_DATA), |c| c.is_gzip()),
+            (zstd_data(TEST_DATA), |c| c.is_zst()),
+            (bz2_data(TEST_DATA), |c| c.is_bzip_2()),
+            (xz_data(TEST_DATA), |c| c.is_xz()),
+            (TEST_DATA.to_vec(), |c| c.is_unknown()),
+        ];
+        for (data, func) in test_cases {
+            let res = AnyReader::from_reader(data.as_slice()).unwrap();
+            assert!(func(&res));
+            assert_data_equal(read_vec(res), TEST_DATA);
+        }
+    }
+}

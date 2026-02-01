@@ -31,3 +31,62 @@ impl<'a, T: Read + 'a> ArchiveVisitor<'a> for ZipWalker<T> {
         Ok(())
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::anyreader::test::zip_archive;
+    use crate::anyreader::FormatKind;
+    use crate::anyreader_walker::entry::FileEntry;
+    use crate::anyreader_walker::tests::{assert_visitor_equal, TestVisitor};
+    use crate::anyreader_walker::walkers::ArchiveVisitor;
+    use std::path::PathBuf;
+
+    pub const TEST_DATA: &[u8] = b"hello world";
+
+    #[test]
+    fn test_read_zip() {
+        let data = zip_archive(vec![("test", TEST_DATA.to_vec())]);
+        let entry = FileEntry::from_bytes(PathBuf::from("test"), data).unwrap();
+        let mut visitor = TestVisitor::default();
+
+        entry.visit(&mut visitor).unwrap();
+
+        let found = visitor.into_data();
+        assert_eq!(
+            found,
+            vec![(
+                FormatKind::Unknown,
+                PathBuf::from("test"),
+                TEST_DATA.to_vec()
+            )]
+        )
+    }
+
+    #[test]
+    fn test_read_zip_nested() {
+        let data = zip_archive(vec![
+            ("file", TEST_DATA.to_vec()),
+            ("nested", zip_archive(vec![("test", TEST_DATA)])),
+        ]);
+        let entry = FileEntry::from_bytes(PathBuf::from("test"), data).unwrap();
+        let mut visitor = TestVisitor::default();
+        entry.visit(&mut visitor).unwrap();
+        let found = visitor.into_data();
+
+        assert_visitor_equal(
+            found,
+            vec![
+                (
+                    FormatKind::Unknown,
+                    PathBuf::from("file"),
+                    TEST_DATA.to_vec(),
+                ),
+                (
+                    FormatKind::Unknown,
+                    PathBuf::from("test"),
+                    TEST_DATA.to_vec(),
+                ),
+            ],
+        )
+    }
+}

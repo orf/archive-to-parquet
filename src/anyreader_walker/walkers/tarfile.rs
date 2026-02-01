@@ -32,3 +32,60 @@ impl<'a, T: Read + 'a> ArchiveVisitor<'a> for TarWalker<T> {
         Ok(())
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::anyreader::test::tar_archive;
+    use crate::anyreader::FormatKind;
+    use crate::anyreader_walker::entry::FileEntry;
+    use crate::anyreader_walker::tests::{assert_visitor_equal, TestVisitor, TEST_DATA};
+    use crate::anyreader_walker::walkers::ArchiveVisitor;
+    use std::path::PathBuf;
+
+    #[test]
+    fn test_read_tar() {
+        let data = tar_archive([("test", TEST_DATA.to_vec())]);
+        let entry = FileEntry::from_bytes(PathBuf::from("test"), data).unwrap();
+        let mut visitor = TestVisitor::default();
+
+        entry.visit(&mut visitor).unwrap();
+
+        let found = visitor.into_data();
+        assert_visitor_equal(
+            found,
+            vec![(
+                FormatKind::Unknown,
+                PathBuf::from("test"),
+                TEST_DATA.to_vec(),
+            )],
+        )
+    }
+
+    #[test]
+    fn test_read_tar_nested() {
+        let data = tar_archive([
+            ("file", TEST_DATA.to_vec()),
+            ("nested", tar_archive(vec![("test", TEST_DATA)])),
+        ]);
+        let entry = FileEntry::from_bytes(PathBuf::from("test"), data).unwrap();
+        let mut visitor = TestVisitor::default();
+        entry.visit(&mut visitor).unwrap();
+        let found = visitor.into_data();
+
+        assert_visitor_equal(
+            found,
+            vec![
+                (
+                    FormatKind::Unknown,
+                    PathBuf::from("file"),
+                    TEST_DATA.to_vec(),
+                ),
+                (
+                    FormatKind::Unknown,
+                    PathBuf::from("test"),
+                    TEST_DATA.to_vec(),
+                ),
+            ],
+        )
+    }
+}
