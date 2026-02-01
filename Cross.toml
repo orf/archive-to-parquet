@@ -1,2 +1,2 @@
 [build.env]
-passthrough = ["RUSTC_WRAPPER=", "RUSTFLAGS="]
+passthrough = ["RUSTC_WRAPPER=", "RUSTFLAGS=", "AWS_LC_SYS_CMAKE_BUILDER"]
