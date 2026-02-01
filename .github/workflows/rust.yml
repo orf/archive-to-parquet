@@ -97,7 +97,7 @@ jobs:
           executable-name: archive-to-parquet
           target: ${{ matrix.target }}
           changes-file: 'CHANGES.md'
-          release-tag-prefix: 'not-set-release-is-created-below'
+          release-tag-regex: '^$'
 
   create_release:
     name: Release
