@@ -34,10 +34,10 @@ impl<'a, T: Read + 'a> ArchiveVisitor<'a> for ZipWalker<T> {
 
 #[cfg(test)]
 mod tests {
-    use crate::anyreader::test::zip_archive;
     use crate::anyreader::FormatKind;
+    use crate::anyreader::test::zip_archive;
     use crate::anyreader_walker::entry::FileEntry;
-    use crate::anyreader_walker::tests::{assert_visitor_equal, TestVisitor};
+    use crate::anyreader_walker::tests::{TestVisitor, assert_visitor_equal};
     use crate::anyreader_walker::walkers::ArchiveVisitor;
     use std::path::PathBuf;
 

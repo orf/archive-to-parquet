@@ -1,8 +1,8 @@
-use crate::anyreader::test::{assert_data_equal_with_msg, read_vec};
 use crate::anyreader::FormatKind;
+use crate::anyreader::test::{assert_data_equal_with_msg, read_vec};
+use crate::anyreader_walker::EntryDetails;
 use crate::anyreader_walker::entry::FileEntry;
 use crate::anyreader_walker::stack::AnyWalker;
-use crate::anyreader_walker::EntryDetails;
 use std::io::Read;
 use std::path::PathBuf;
 
