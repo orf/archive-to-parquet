@@ -34,7 +34,7 @@ smallvec = "1.13.2"
 
 arrow = { version = "57.2.0", default-features = false }
 parquet = "57.2.0"
-clap = { version = "4.5.23", features = ["derive"] }
+clap = { version = "4.5.56", features = ["derive"] }
 ring = "0.17.8"
 byte-unit = "5.1.6"
 tracing = { version = "0.1.40" }
