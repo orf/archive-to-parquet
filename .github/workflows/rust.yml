@@ -59,6 +59,15 @@ jobs:
           prefix-key: ${{ matrix.target }}
           key: ${{ steps.rust.outputs.cachekey }}-${{ github.ref_name }}
 
+      - name: Update GCC
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-12 g++-12
+          sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-12 100
+          sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-12 100
+          sudo update-alternatives --install /usr/bin/cc cc /usr/bin/gcc-12 100
+
       - name: Cross test
         run: mise run test --target ${{ matrix.target }}
 
